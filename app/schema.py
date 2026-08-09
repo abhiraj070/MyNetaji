@@ -6,8 +6,6 @@ from pydantic import BaseModel
 class LocationRequest(BaseModel):
     latitude: float
     longitude: float
-    # Optional with an English default, so a client that sends nothing keeps
-    # the exact behaviour it had before localisation existed.
     lang: str = "en"
 
 
@@ -32,9 +30,6 @@ class GetMinisterRequest(BaseModel):
     lang: str = "en"
 
 class GetMpRequest(BaseModel):
-    # Defaults matter: in Pydantic v2 `Optional[str]` on its own is still a
-    # required field, so without them every lookup had to send all three.
-    # With them, an empty body means "list all", mirroring GetCmRequest.
     name: Optional[str] = None
     id: Optional[int] = None
     lang: str = "en"
