@@ -386,7 +386,9 @@ export function Home() {
   return (
     <main className="flex min-h-dvh flex-col">
       {stage === "landing" && (
-        <div className="flex flex-1 items-center">
+        // The landing page scrolls now, so it fills the column rather than
+        // being centred in it — `items-center` would pin a tall page mid-screen.
+        <div className="flex-1">
           <Landing onAllowLocation={handleAllowLocation} isBusy={isLocating} />
         </div>
       )}
