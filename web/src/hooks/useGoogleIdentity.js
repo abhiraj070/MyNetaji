@@ -9,23 +9,26 @@ import {
 } from "@/lib/googleIdentity";
 
 /**
- * Google's own button, rendered invisibly on top of SYL's.
+ * Google's own Sign in with Google button, rendered visibly.
  *
- * Only a button GIS itself rendered can open the account-chooser popup — a
- * plain `onClick` cannot, and One Tap (`prompt()`) is a different, unreliable
- * surface that the browser may decline to show at all. So Google's button is
- * real and receives the click; it is just transparent, stretched over the
- * visible button, which stays SYL's design.
+ * It has to be Google's button and it has to be genuinely visible. Only a
+ * button GIS rendered can open the account chooser, and on a real origin
+ * Google refuses to act on a click it believes the reader could not see — an
+ * anti-clickjacking check. An earlier version of this hid Google's button at
+ * `opacity: 0` underneath SYL's own; that worked on localhost, which Google
+ * exempts, and was completely inert in production: no popup, no request, no
+ * error. Nothing about that is worth a second attempt.
  *
- * GIS renders at a fixed pixel size (it caps `width` at 400), hence the
- * transform: the overlay is scaled to whatever the visible button measures, so
- * the hit area matches the thing the reader is aiming at.
+ * So the visible control is Google's, sized to the slot it is given. Width is
+ * the one dimension GIS accepts, and it clamps to 200–400px, which is why the
+ * measurement is clamped to the same range rather than passed on raw.
  */
-const GIS_WIDTH = 400;
-const GIS_HEIGHT = 44;
+const MIN_WIDTH = 200;
+const MAX_WIDTH = 400;
+const DEFAULT_WIDTH = 320;
 
 export function useGoogleIdentity(onCredential, locale) {
-  const frameRef = useRef(null);
+  const slotRef = useRef(null);
   const containerRef = useRef(null);
   // A build with no client ID can never get to "ready", so it starts settled
   // rather than showing a spinner-shaped promise it cannot keep. It is a
@@ -37,6 +40,7 @@ export function useGoogleIdentity(onCredential, locale) {
     GOOGLE_CLIENT_ID ? "loading" : "misconfigured",
   );
   const [attempt, setAttempt] = useState(0);
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
 
   // Claim the credential callback while mounted. GIS has exactly one, so with
   // two buttons on the page the last mounted wins — which is harmless, because
@@ -50,6 +54,25 @@ export function useGoogleIdentity(onCredential, locale) {
     if (!GOOGLE_CLIENT_ID) return;
     setStatus("loading");
     setAttempt((n) => n + 1);
+  }, []);
+
+  // Google's button is laid out in pixels, so it has to be told how wide the
+  // slot is — and told again when that changes, which on this app means a
+  // breakpoint or a language switch rather than anything continuous.
+  useEffect(() => {
+    const slot = slotRef.current;
+    if (!slot) return;
+
+    const measure = () => {
+      const measured = Math.round(slot.getBoundingClientRect().width);
+      if (!measured) return;
+      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, measured)));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(slot);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -71,8 +94,8 @@ export function useGoogleIdentity(onCredential, locale) {
         const container = containerRef.current;
         if (cancelled || !container) return;
 
-        // StrictMode mounts effects twice in dev; without this the second pass
-        // stacks a second Google button inside the same box.
+        // StrictMode mounts effects twice in dev, and a width change re-renders
+        // the button; without this the replacements stack up in the same box.
         container.replaceChildren();
         gis.renderButton(container, {
           type: "standard",
@@ -81,10 +104,8 @@ export function useGoogleIdentity(onCredential, locale) {
           shape: "pill",
           text: "continue_with",
           logo_alignment: "center",
-          width: GIS_WIDTH,
-          // Invisible, but not silent: this is the button a screen reader
-          // announces, so it says "Continue with Google" in the language the
-          // rest of the page is in. Google's popup follows the same locale.
+          width,
+          // Google's own wording, in the language the rest of the page is in.
           locale,
         });
 
@@ -97,41 +118,13 @@ export function useGoogleIdentity(onCredential, locale) {
     return () => {
       cancelled = true;
     };
-  }, [attempt, locale]);
-
-  // Match the invisible button's box to the visible one, and keep matching it
-  // through language switches, font loading and rotation.
-  useEffect(() => {
-    const frame = frameRef.current;
-    const container = containerRef.current;
-    if (!frame || !container) return;
-
-    const fit = () => {
-      const { width, height } = frame.getBoundingClientRect();
-      if (!width || !height) return;
-      // Measured unscaled, and from Google's button rather than the box it was
-      // asked to fill: it renders a little shorter than the height it is given,
-      // and the difference is a dead strip along the bottom of the visible
-      // button if the scale is computed from the wrong number.
-      container.style.transform = "none";
-      const natural = container.firstElementChild?.getBoundingClientRect();
-      const naturalWidth = natural?.width || GIS_WIDTH;
-      const naturalHeight = natural?.height || GIS_HEIGHT;
-      container.style.transform = `scale(${width / naturalWidth}, ${height / naturalHeight})`;
-    };
-
-    fit();
-    const observer = new ResizeObserver(fit);
-    observer.observe(frame);
-    return () => observer.disconnect();
-    // `locale` re-renders Google's button, and the replacement is measured
-    // again — its own size can change even when the visible button's does not.
-  }, [status, locale]);
+  }, [attempt, locale, width]);
 
   return {
-    frameRef,
+    /** The box Google's button is sized to fill. */
+    slotRef,
+    /** Where GIS renders. Nothing else may style or transform it. */
     containerRef,
-    /** The overlay is live and clicks will reach Google. */
     isReady: status === "ready",
     isUnavailable: status === "unavailable" || status === "misconfigured",
     /** Why sign-in is unavailable, for the screen to phrase it honestly. */
@@ -142,6 +135,5 @@ export function useGoogleIdentity(onCredential, locale) {
           ? "gis_unavailable"
           : null,
     retry,
-    gisSize: { width: GIS_WIDTH, height: GIS_HEIGHT },
   };
 }

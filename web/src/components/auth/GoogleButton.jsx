@@ -10,24 +10,22 @@ import { useTranslation } from "@/lib/i18n";
 /**
  * "Continue with Google".
  *
- * The mark is the official four-colour G, inlined as SVG rather than pulled
- * from a CDN: Google's brand guidance requires the unmodified logo, and an
- * icon font or a recoloured copy would not be it. `lucide-react`, which every
- * other icon here comes from, deliberately ships no brand logos.
+ * The control is Google's own rendered button, not SYL's. That is not a
+ * preference: on a real origin Google will not act on a click it thinks the
+ * reader could not see, so the previous approach — Google's button held at
+ * `opacity: 0` over SYL's pill — was completely inert in production while
+ * working on localhost, which Google exempts from the check. A button that
+ * cannot be clicked is not a design worth keeping.
  *
- * The button itself is SYL's, not Google's chrome — white face, the app's
- * hairline ring and card shadow, the same press physics as the verdict discs.
- * Google's guidance is about the mark and the wording, and both are intact;
- * dropping their exact button into this app would look like a pasted-in
- * fragment of somebody else's product.
+ * `theme: "outline"`, `shape: "pill"` and `text: "continue_with"` are the
+ * closest GIS gets to what was here before: a white pill, the four-colour
+ * mark, the same words. The surrounding shadow and hairline ring are SYL's,
+ * applied to the wrapper rather than to Google's button, which must be left
+ * alone — anything that transforms or covers it brings the check back.
  *
- * What actually takes the click is Google's own button, transparent and
- * stretched over this one by `useGoogleIdentity` — the account-chooser popup
- * only opens from a button GIS rendered itself. So while that overlay is live
- * the visible button is decoration: hidden from assistive tech and skipped by
- * the tab key, because the real, labelled control is sitting on top of it. If
- * GIS never loads, the overlay is not there and this button becomes the real
- * one again, retrying the load when pressed.
+ * The hand-built button below is the fallback for when GIS never loads. It is
+ * real then, because nothing of Google's is present to take the click, and it
+ * retries the load when pressed.
  */
 function GoogleMark({ className = "size-5" }) {
   return (
@@ -55,63 +53,40 @@ function GoogleMark({ className = "size-5" }) {
 export function GoogleButton({
   onCredential,
   onUnavailable,
-  isBusy = false,
   className = "",
 }) {
   const { t, language } = useTranslation();
-  const {
-    frameRef,
-    containerRef,
-    isReady,
-    isUnavailable,
-    unavailableReason,
-    retry,
-    gisSize,
-  } = useGoogleIdentity(onCredential, language);
+  const { slotRef, containerRef, isReady, isUnavailable, unavailableReason, retry } =
+    useGoogleIdentity(onCredential, language);
 
   useEffect(() => {
     onUnavailable?.(unavailableReason);
   }, [unavailableReason, onUnavailable]);
 
-  // The overlay stops taking clicks while the credential is being exchanged,
-  // so a second press cannot open a second popup mid-sign-in.
-  const overlayLive = isReady && !isBusy;
-
   return (
-    <div className={`relative inline-flex w-full ${className}`}>
-      <motion.button
-        type="button"
-        onClick={isUnavailable ? retry : undefined}
-        disabled={isBusy}
-        aria-hidden={overlayLive}
-        tabIndex={overlayLive ? -1 : 0}
-        whileTap={isBusy ? undefined : { scale: 0.975 }}
-        transition={SPRING_PRESS}
-        className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-surface px-6 py-3.5 font-display text-sm font-bold text-ink shadow-card ring-1 ring-ink/10 ring-inset transition-shadow hover:shadow-lift disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-      >
-        <GoogleMark />
-        {isBusy ? t("auth.signingIn") : t("auth.continueWithGoogle")}
-      </motion.button>
-
-      {/* Google's button. Transparent, not hidden: `visibility` or `display`
-          would stop it rendering, and it has to be a real, hit-testable
-          element for the popup to count as user-initiated. */}
+    <div ref={slotRef} className={`flex w-full justify-center ${className}`}>
+      {/* Google's button. The ring and shadow sit on this wrapper; the button
+          itself is untouched, which is what keeps it clickable. */}
       <div
-        ref={frameRef}
-        aria-hidden={!overlayLive}
-        className={`absolute inset-0 overflow-hidden rounded-full opacity-0 ${
-          overlayLive ? "" : "pointer-events-none"
+        ref={containerRef}
+        className={`overflow-hidden rounded-full ${
+          isReady ? "shadow-card ring-1 ring-ink/10 ring-inset" : ""
         }`}
-      >
-        <div
-          ref={containerRef}
-          style={{
-            width: gisSize.width,
-            height: gisSize.height,
-            transformOrigin: "top left",
-          }}
-        />
-      </div>
+      />
+
+      {/* Only reachable when GIS is unavailable: pressing it tries again. */}
+      {isUnavailable && (
+        <motion.button
+          type="button"
+          onClick={retry}
+          whileTap={{ scale: 0.975 }}
+          transition={SPRING_PRESS}
+          className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-surface px-6 py-3.5 font-display text-sm font-bold text-ink shadow-card ring-1 ring-ink/10 ring-inset transition-shadow hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          <GoogleMark />
+          {t("auth.continueWithGoogle")}
+        </motion.button>
+      )}
     </div>
   );
 }

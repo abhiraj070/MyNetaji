@@ -85,8 +85,12 @@ export function useLogout() {
   return useMutation({
     mutationFn: logoutSession,
     onSuccess: () => {
-      queryClient.setQueryData(SESSION_KEY, null);
+      // Cleared first, then marked signed out: `clear()` drops every cached
+      // answer including the session, and writing the null afterwards is what
+      // stops the sign-in screen from re-asking and bouncing a just-signed-out
+      // reader back into the app.
       queryClient.clear();
+      queryClient.setQueryData(SESSION_KEY, null);
     },
   });
 }

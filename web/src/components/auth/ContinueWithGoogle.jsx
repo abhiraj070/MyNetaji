@@ -49,16 +49,23 @@ export function ContinueWithGoogle({ className = "" }) {
   const code = gisReason ?? errorCode;
   const message = code ? t(ERROR_COPY[code] ?? "auth.exchangeFailed") : null;
 
+  // Progress is said rather than shown on the button: the button is Google's
+  // now, and covering or restyling it is what broke sign-in in production.
+  const status = isPending ? t("auth.signingIn") : null;
+
   return (
     <div className="flex w-full flex-col items-center gap-3">
       <GoogleButton
         onCredential={signIn}
         onUnavailable={handleUnavailable}
-        isBusy={isPending}
         className={className}
       />
 
-      {message && (
+      {status && (
+        <p className="text-xs font-semibold text-muted">{status}</p>
+      )}
+
+      {!status && message && (
         <p
           role="alert"
           className="mx-auto max-w-sm rounded-card bg-slap-wash px-4 py-3 text-xs leading-relaxed font-semibold text-slap-strong ring-1 ring-slap/15 ring-inset"

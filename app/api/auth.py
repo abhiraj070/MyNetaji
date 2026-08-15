@@ -88,19 +88,12 @@ def verify_google(credential):
             credential,
             google_requests.Request(),
             _settings.CLIENT_ID,
-            # Google signs the token on their clock and this checks it on ours.
-            # Without a little tolerance, a machine a second or two behind
-            # rejects a perfectly good credential as "used too early".
             clock_skew_in_seconds=10,
         )
     except google_exceptions.TransportError as exc:
-        # Google's certificate endpoint was unreachable — the credential may be
-        # fine, so this is worth retrying rather than a sign-in failure.
         logger.error("Could not reach Google to verify a credential: %s", exc)
         raise HTTPException(503, "Could not reach Google. Please try again.")
     except ValueError as exc:
-        # Expired, wrong audience, wrong signature — the reason never goes to
-        # the browser, but without it in the log a failed sign-in is unreadable.
         logger.warning("Google credential rejected: %s", exc)
         raise HTTPException(401, "Invalid Google credential")
 
@@ -174,5 +167,16 @@ def me(
 @router.post("/logout")
 def logout(response: Response):
     for key in ("access_token", "refresh_token"):
-        response.delete_cookie(key, path="/")
+        # Same attributes the cookies were set with. `delete_cookie` defaults
+        # to samesite="lax"/secure=False, and in production the app and the API
+        # are different sites — a Lax cookie sent from a cross-site request is
+        # refused outright, so the deletion never lands and the reader stays
+        # signed in.
+        response.delete_cookie(
+            key,
+            path="/",
+            httponly=True,
+            secure=_settings.COOKIE_SECURE,
+            samesite=_settings.COOKIE_SAMESITE,
+        )
     return {"message": "Logged out"}

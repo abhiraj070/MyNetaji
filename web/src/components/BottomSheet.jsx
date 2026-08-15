@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
 import { SPRING_ENTRANCE, SPRING_POP, SPRING_SHEET } from "@/lib/motion";
+import { useDismissOnBack } from "@/hooks/useDismissOnBack";
 import { useTranslation } from "@/lib/i18n";
 
 /**
@@ -12,6 +13,10 @@ import { useTranslation } from "@/lib/i18n";
  *
  * Reused for Information, Leaderboard, and Search — the trio of secondary
  * surfaces that keep the main representative card slim.
+ *
+ * Every sheet built on this is dismissed by the platform's Back action before
+ * the page is: that lives in `useDismissOnBack`, wired here once so no sheet
+ * has to remember to ask for it.
  */
 export function BottomSheet({
   open,
@@ -24,6 +29,9 @@ export function BottomSheet({
 }) {
   const contentRef = useRef(null);
   const { t } = useTranslation();
+
+  // Back / the iOS edge-swipe closes this sheet rather than leaving the page.
+  useDismissOnBack(open, onClose);
 
   useEffect(() => {
     if (!open) return;
