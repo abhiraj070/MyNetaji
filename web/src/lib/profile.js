@@ -29,25 +29,6 @@ export function placeOf(subject) {
   return subject.state ? titleCase(subject.state) : null;
 }
 
-export function placeLabelKeyOf(subject) {
-  if (subject?.tier === "minister") return "profile.portfolio";
-  if (subject?.tier === "mp") return "profile.constituency";
-  return "profile.state";
-}
-
-/**
- * The two metrics worth a card of their own: what the public has said, and
- * what they declared they own. Deliberately not the Assets/Liabilities/
- * Criminal Cases/Experience set the original design brief sketched, since
- * none of that exists in the data yet (see module docstring). The assets card
- * is always tappable: it opens the full breakdown sheet, which is honest about
- * there being no affidavit on file rather than hiding the interaction.
- *
- * Party and State/Portfolio used to sit here too and were cut — both are
- * already on the hero directly above this grid (the party as its badge, the
- * state or portfolio inside the designation line), so the cards restated what
- * the reader had just read and cost a whole row to do it.
- */
 export function atAGlanceMetrics(subject, t) {
   if (!subject) return [];
 
@@ -127,39 +108,6 @@ export const ASSET_FIELD_GROUPS = [
   },
 ];
 
-/**
- * The full declared-wealth breakdown for a subject's latest affidavit.
- * Nothing populates this yet — there is no affidavit source wired up (see
- * module docstring) — so every field is explicitly `null` rather than a
- * guessed or zeroed value; `hasData` lets the UI distinguish "on file but
- * zero" from "not on file" the moment a real source lands.
- */
-export function assetBreakdown(_subject) {
-  return {
-    hasData: false,
-    totalAssets: null,
-    totalLiabilities: null,
-    movableAssets: null,
-    immovableAssets: null,
-    cash: null,
-    bankDeposits: null,
-    sharesInvestments: null,
-    mutualFunds: null,
-    jewellery: null,
-    vehicles: null,
-    residentialProperty: null,
-    commercialProperty: null,
-    agriculturalLand: null,
-    otherAssets: null,
-  };
-}
-
-/**
- * 2–3 short factual sentences, each derived from a field the API actually
- * returns. Nothing here is an opinion or a guess — an insight that would
- * require history we don't have (term count, party-switch history, wealth
- * growth) is simply never generated.
- */
 export function quickInsights(subject, t) {
   if (!subject) return [];
   const insights = [];
@@ -198,27 +146,4 @@ export function quickInsights(subject, t) {
   }
 
   return insights.slice(0, 3);
-}
-
-/** First `count` manifesto points, for the Overview tab's compact preview. */
-export function manifestoPreview(subject, count = 2) {
-  return manifestoPoints(subject).slice(0, count);
-}
-
-/**
- * The single real milestone we can show in the Political Journey timeline:
- * their current position. No year — we don't have a "since" date — and no
- * financials, since there's no affidavit data on file.
- */
-export function currentJourneyEntry(subject) {
-  if (!subject) return null;
-  return {
-    role:
-      subject.tier === "minister"
-        ? subject.rank_title || subject.designation || "Union Minister"
-        : subject.designation || "Chief Minister",
-    party: subject.party || null,
-    place: placeOf(subject),
-    placeLabelKey: placeLabelKeyOf(subject),
-  };
 }

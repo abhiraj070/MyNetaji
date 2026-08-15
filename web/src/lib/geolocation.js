@@ -6,36 +6,6 @@ export class GeolocationError extends Error {
   }
 }
 
-/**
- * Keyed by `GeolocationError.reason`.
- *
- * Superseded for display by the `geo.*` translation keys, which use these same
- * reason strings as their key path — the UI reads `t("geo.denied.title")`
- * rather than this map, so the copy can be localised. Kept as the English
- * reference (and for any non-React consumer) rather than deleted.
- */
-export const GEOLOCATION_COPY = {
-  unsupported: {
-    overline: "Unsupported browser",
-    title: "This browser can't report location",
-    body: "Geolocation isn't available here. Try Chrome, Safari, or Firefox.",
-  },
-  denied: {
-    overline: "Location blocked",
-    title: "We can't see where you are",
-    body: "Enable location for this site in your browser settings, then try again.",
-  },
-  unavailable: {
-    overline: "No fix",
-    title: "Your device couldn't place itself",
-    body: "Moving somewhere with a clearer signal usually helps.",
-  },
-  timeout: {
-    overline: "Timed out",
-    title: "That took too long",
-    body: "Finding your location timed out. Give it another go.",
-  },
-};
 
 /**
  * Promise wrapper over the callback-style Geolocation API.

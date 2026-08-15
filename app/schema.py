@@ -62,11 +62,6 @@ class GetAssetsRequest(BaseModel):
     party: str
     lang: str = "en"
 
-class UpdateMpsRequest(BaseModel):
-    name: str
-    constituency_key: str
-    field_to_update: str
-
 class GetMpPerformanceRequest(BaseModel):
     id: int
     lang: str = "en"

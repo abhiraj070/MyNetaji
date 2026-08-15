@@ -1,26 +1,19 @@
 {
   "app": {
-    "name": "MyNetaji",
-    "tagline": "Slap or Rose? You decide."
+    "name": "MyNetaji"
   },
   "language": {
     "title": "Choose your language",
-    "subtitle": "You can change this any time from the menu.",
-    "english": "English",
-    "hindi": "हिन्दी",
-    "continue": "Continue",
-    "current": "Language"
+    "subtitle": "You can change this any time from the menu."
   },
   "nav": {
     "menu": "Open menu",
     "closeMenu": "Close menu",
     "search": "Search",
     "leaderboard": "Leaderboard",
-    "information": "Information",
     "game": "Slap or Rose",
     "discussion": "X Live Discussion",
     "share": "Share",
-    "liveNews": "Live News",
     "feedback": "Feedback",
     "back": "← Back",
     "backToCm": "← Back to your CM",
@@ -33,7 +26,6 @@
     "skip": "Skip all",
     "progress": "Step {{current}} of {{total}}",
     "replay": "Replay tutorial",
-    "replayHint": "Take the quick tour again",
     "steps": {
       "search": {
         "title": "Search",
@@ -66,27 +58,8 @@
       "cta": "Let's Go"
     }
   },
-  "landing": {
-    "eyebrow": "Verdicts · India",
-    "title": "Slap or Rose? You decide.",
-    "body": "Read what they promised. Then decide if they deserve a 👋 or 🌹.",
-    "cta": "Who's mine? →",
-    "privacy": "Read once. Never stored.",
-    "titleLead": "Slap or Rose?",
-    "titleEmphasis": "You decide.",
-    "finding": "Finding you…",
-    "whatYouSee": "What you'll see",
-    "free": "Free",
-    "promiseIdentity": "Name, party, and their office",
-    "promiseRecord": "Their record, in plain terms",
-    "promiseCommitments": "Party commitments, where we have them",
-    "promiseVerdict": "A slap or a rose — one side each"
-  },
   "status": {
-    "locating": "Finding your location…",
-    "loading": "Loading…",
     "tryAgain": "Try again",
-    "retry": "Retry",
     "lookupFailedOverline": "Lookup failed",
     "lookupFailedTitle": "We couldn't reach the register",
     "noMatchOverline": "No match",
@@ -118,10 +91,7 @@
     }
   },
   "card": {
-    "featured": "Featured",
     "yourCm": "Your CM",
-    "cabinetMinister": "Cabinet Minister",
-    "primeMinister": "Prime Minister",
     "chiefMinister": "Chief Minister",
     "unionMinister": "Union Minister",
     "yourMp": "Your MP",
@@ -131,27 +101,20 @@
     "homeTierAria": "Which of your representatives to show"
   },
   "vote": {
-    "slap": "Slap",
-    "rose": "Rose",
-    "slapAria": "Slap this representative",
-    "roseAria": "Rose this representative",
     "slapRecorded": "👋 Another slap recorded.",
     "roseRecorded": "🌹 One more rose added.",
-    "voteFailed": "Couldn't record that. Try again?",
     "noVerdicts": "No verdicts yet — be the first.",
     "yourVerdict": "Your verdict",
     "saveFailed": "That didn't save. Try again."
   },
   "game": {
     "title": "Slap or Rose",
-    "subtitle": "Your verdict on today's leader.",
     "noSubjectTitle": "Nobody to judge yet",
     "noSubjectBody": "Head back to the main page and share your location so we can find your leader first.",
     "noSubjectCta": "Find my leader"
   },
   "highlight": {
     "title": "Today's Highlight",
-    "trending": "Trending",
     "mostSlapped": "Most Slapped",
     "mostLoved": "Most Loved",
     "mostJudged": "Most Judged",
@@ -159,24 +122,8 @@
     "unavailable": "Unavailable"
   },
   "leaderboard": {
-    "title": "Leaderboard",
-    "subtitle": "Who's getting slapped, who's getting roses.",
-    "chiefMinisters": "Chief Ministers",
-    "ministers": "Ministers",
-    "bySlaps": "By slaps",
-    "byRoses": "By roses",
-    "loadMore": "Load more",
-    "empty": "Nobody's been voted on yet.",
     "shareTitle": "MyNetaji Leaderboard",
     "shareText": "Who's getting slapped and rosed across India? See the leaderboard 👀"
-  },
-  "search": {
-    "title": "Search",
-    "subtitle": "Find a Chief Minister or a Union Minister.",
-    "placeholder": "Search by name…",
-    "noResults": "No matches found.",
-    "chiefMinisters": "Chief Ministers",
-    "ministers": "Ministers"
   },
   "profile": {
     "overview": "Overview",
@@ -186,16 +133,12 @@
     "sectionAria": "Profile section",
     "atAGlance": "At a Glance",
     "quickInsights": "Quick Insights",
-    "state": "State",
-    "portfolio": "Portfolio",
     "publicVerdict": "Public Verdict",
     "criminalCases": "Criminal Cases",
     "declaredAssets": "Declared Assets",
     "tapForDetails": "Tap for details",
     "tapToView": "Tap to view breakdown",
-    "notOnRecord": "Not on record",
     "current": "Current",
-    "noManifesto": "No manifesto commitments on record yet.",
     "journeyEmpty": "That's everything confirmed for now. Past terms, party changes and affidavit-by-affidavit wealth history aren't available yet — this profile will fill in as we add full election records.",
     "noFinancials": "Declared assets, liabilities and other affidavit financials for this milestone aren't available yet.",
     "source": "Source:",
@@ -204,8 +147,6 @@
     "until": "Until",
     "ministerCommitments": "Union Minister's commitments",
     "cmCommitments": "Chief Minister's commitments",
-    "showLess": "Show less",
-    "showAll": "Show all",
     "insightMoreRoses": "Getting more 🌹 roses than 👋 slaps from voters right now.",
     "insightMoreSlaps": "Getting more 👋 slaps than 🌹 roses from voters right now.",
     "insightEven": "Slaps and roses are running dead even right now.",
@@ -217,7 +158,6 @@
     "collapse": "Collapse",
     "expand": "Expand",
     "assetsChipAria": "Declared assets {{amount}} — view breakdown",
-    "constituency": "Constituency",
     "insightMp": "Currently the Member of Parliament for {{place}}.",
     "mpCommitments": "MP's commitments"
   },
@@ -255,16 +195,7 @@
     "pickFirst": "Pick a reaction first, then tell us more…",
     "send": "Send 🚀",
     "sending": "Sending…",
-    "failed": "Couldn't send your feedback. Please try again.",
-    "thanksTitle": "Thank you!",
-    "thanksBody": "Your feedback helps us make MyNetaji better.",
-    "done": "Done",
-    "slapDoneTitle": "Fair enough!",
-    "roseDoneTitle": "Thanks!",
-    "slapLine1": "We deserved that.",
-    "slapLine2": "Your feedback helps us improve MyNetaji.",
-    "roseLine1": "Your feedback helps improve MyNetaji.",
-    "doneLine3": "We'll probably fix it before the politicians fix the roads. 😄"
+    "failed": "Couldn't send your feedback. Please try again."
   },
   "brief": {
     "title": "Political Brief",
@@ -277,9 +208,6 @@
     "continueCaption": "Opens the story preview · publisher one tap away",
     "openOriginal": "Open Original Reporting",
     "continueOn": "Continue on {{publisher}}",
-    "sourceLabel": "Source",
-    "categoryLabel": "Category",
-    "publishedLabel": "Published",
     "previewHeading": "Article Preview",
     "articleHeading": "Article",
     "previewNotice": "This is a preview provided by the publisher. Continue to the original article for the complete story.",
@@ -290,28 +218,11 @@
     "retry": "Retry",
     "loading": "Loading today's briefing"
   },
-  "news": {
-    "title": "Live News",
-    "subtitle": "The latest on this representative.",
-    "empty": "No news yet.",
-    "failed": "Couldn't load the news. Try again?"
-  },
-  "discussion": {
-    "title": "X Live Discussion",
-    "subtitle": "What people are posting about {{name}}.",
-    "empty": "No posts yet.",
-    "failed": "Couldn't load posts. Try again?",
-    "refresh": "Refresh"
-  },
   "comingSoon": {
     "cta": "Looking Forward",
     "roadmap": "Coming Soon",
     "badge": "Coming soon",
     "live": "Live",
-    "journey": {
-      "title": "Political Journey is Coming Soon",
-      "body": "Career milestones and affidavit history for MPs aren't on record yet. This timeline will fill in as those records are added."
-    },
     "x": {
       "headerTitle": "X Pulse",
       "headerSubtitle": "Real-time political conversation",
@@ -357,13 +268,10 @@
   "share": {
     "copied": "Link copied — paste it anywhere.",
     "failed": "Couldn't copy the link. Try again?",
-    "slapped": "I slapped {{name}}. 👋 Now it's your turn.",
-    "rosed": "I gave {{name}} a 🌹. What's your verdict?",
-    "neutral": "Slap or Rose {{name}}? Decide for yourself."
+    "slapped": "I slapped {{name}}. 👋 Now it's your turn."
   },
   "common": {
     "close": "Close",
-    "cancel": "Cancel",
     "profileFailed": "Couldn't load their profile. Try again?"
   },
   "badge": {

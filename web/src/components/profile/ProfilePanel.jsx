@@ -15,15 +15,10 @@ import { subjectKeyOf } from "@/lib/subject";
 /**
  * The information experience itself: the tab row and whatever tab is open.
  *
- * Extracted from `PoliticianProfileSheet` when information became the main
- * page, so the same component serves both — the page renders it inline, the
- * sheet renders it inside a `BottomSheet`. Nothing about the tabs changed in
- * the move: same order, same styling, same active states, same content.
- *
- * `stickyTabs` is the one difference between the two homes. Inside a sheet the
- * row pins to the top of the scrolling panel; on the page the app bar already
- * owns `top: 0`, and a second sticky element competing for it is how you get
- * two bars overlapping at different breakpoints.
+ * `stickyTabs` exists for hosts that render this inside a scrolling sheet,
+ * where the row should pin to the top of the panel. The page leaves it off:
+ * the app bar already owns `top: 0`, and a second sticky element competing for
+ * it is how you get two bars overlapping at different breakpoints.
  */
 
 // No emoji here (unlike `PillTabs`'s other uses in Leaderboard.jsx): with

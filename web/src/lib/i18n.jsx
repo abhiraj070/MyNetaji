@@ -18,12 +18,12 @@ import hi from "@/translations/hi.json";
  * changes. The `label` is deliberately written in the language itself, since
  * that is what a speaker looking for their own language scans for.
  */
-export const LANGUAGES = [
+const LANGUAGES = [
   { code: "en", label: "English", messages: en },
   { code: "hi", label: "हिन्दी", messages: hi },
 ];
 
-export const DEFAULT_LANGUAGE = "en";
+const DEFAULT_LANGUAGE = "en";
 const STORAGE_KEY = "mynetaji:language";
 
 const MESSAGES = Object.fromEntries(LANGUAGES.map((l) => [l.code, l.messages]));
@@ -133,15 +133,11 @@ export function LanguageProvider({ children }) {
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
-export function useLanguage() {
+/** The hook every component uses: `const { t } = useTranslation();` */
+export function useTranslation() {
   const context = useContext(LanguageContext);
   if (!context) {
-    throw new Error("useLanguage must be used inside <LanguageProvider>");
+    throw new Error("useTranslation must be used inside <LanguageProvider>");
   }
   return context;
-}
-
-/** Sugar for the common case: `const { t } = useTranslation();` */
-export function useTranslation() {
-  return useLanguage();
 }

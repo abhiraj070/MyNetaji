@@ -164,15 +164,6 @@ export function PreviewNote({ title, body, bullets, order = 0 }) {
   );
 }
 
-/**
- * The compact form, for a tab that has its section built but no data behind it
- * yet — an MP's Political Journey, where the timeline component is wired up and
- * the source simply holds no MP records.
- *
- * Same tile, same tone and same voice as the full-page previews above, sized to
- * sit inside a tab rather than fill a sheet. It states what will appear here
- * rather than apologising for what doesn't.
- */
 export function InlineComingSoon({ icon, title, body, order = 0 }) {
   return (
     <motion.div

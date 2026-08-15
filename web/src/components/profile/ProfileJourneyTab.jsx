@@ -16,8 +16,8 @@ import { placeOf } from "@/lib/profile";
  *
  * Milestones come from `POST /get-timeline`, keyed on the politician's name and
  * designation. The request is made when this tab mounts — which only happens
- * once the user selects it, since `PoliticianProfileSheet` renders tabs
- * conditionally — so nothing is fetched on page load.
+ * once the user selects it, since `ProfilePanel` renders tabs conditionally —
+ * so nothing is fetched on page load.
  */
 export function ProfileJourneyTab({ subject, onOpenAssets }) {
   const { t } = useTranslation();

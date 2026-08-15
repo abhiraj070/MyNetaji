@@ -1,6 +1,5 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy import MetaData, Table, and_, func, select
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.db.connect import engine, get_db
@@ -375,65 +374,43 @@ def transparency_section(db, mp_id):
 
 @app.post("/get-mp-performance")
 def get_mp_performance(request: GetMpPerformanceRequest, db: Session = Depends(get_db)):
-    try:
-        person = _row(db, select(mp.c.id, mp.c.name, mp.c.state, mp.c.state_key,
-                                 mp.c.constituency, mp.c.party)
-                      .where(mp.c.id == request.id))
-        if person is None:
-            raise HTTPException(status_code=404, detail="MP not found")
+    person = _row(db, select(mp.c.id, mp.c.name, mp.c.state, mp.c.state_key,
+                             mp.c.constituency, mp.c.party)
+                  .where(mp.c.id == request.id))
+    if person is None:
+        raise HTTPException(status_code=404, detail="MP not found")
 
-        return {"performance": {
-            "mp": {
-                "id": person["id"], "name": person["name"],
-                "state": person["state"], "constituency": person["constituency"],
-                "party": person["party"],
-            },
-            "development": development_section(db, request.id),
-            "parliament": parliament_section(db, request.id, person["state_key"]),
-            "promises": promises_section(db, request.id),
-            "transparency": transparency_section(db, request.id),
-        }}
-    except HTTPException:
-        raise
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    return {"performance": {
+        "mp": {
+            "id": person["id"], "name": person["name"],
+            "state": person["state"], "constituency": person["constituency"],
+            "party": person["party"],
+        },
+        "development": development_section(db, request.id),
+        "parliament": parliament_section(db, request.id, person["state_key"]),
+        "promises": promises_section(db, request.id),
+        "transparency": transparency_section(db, request.id),
+    }}
 
 
 @app.post("/get-mp-performance-works")
 def get_mp_performance_works(request: GetMpPerformanceListRequest,
                              db: Session = Depends(get_db)):
-    try:
-        page, size, _ = paging(request)
-        return {"works": works_page(db, request.id, page=page, size=size,
-                                    status=request.status)}
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    page, size, _ = paging(request)
+    return {"works": works_page(db, request.id, page=page, size=size,
+                                status=request.status)}
 
 
 @app.post("/get-mp-performance-questions")
 def get_mp_performance_questions(request: GetMpPerformanceListRequest,
                                  db: Session = Depends(get_db)):
-    try:
-        page, size, _ = paging(request)
-        return {"questions": questions_page(db, request.id, page=page, size=size,
-                                            question_type=request.question_type)}
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    page, size, _ = paging(request)
+    return {"questions": questions_page(db, request.id, page=page, size=size,
+                                        question_type=request.question_type)}
 
 
 @app.post("/get-mp-performance-debates")
 def get_mp_performance_debates(request: GetMpPerformanceListRequest,
                                db: Session = Depends(get_db)):
-    try:
-        page, size, _ = paging(request)
-        return {"debates": debates_page(db, request.id, page=page, size=size)}
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    page, size, _ = paging(request)
+    return {"debates": debates_page(db, request.id, page=page, size=size)}

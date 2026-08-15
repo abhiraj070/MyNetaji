@@ -78,8 +78,3 @@ export const STATUS_TONE = {
   ongoing: "brand",
   pending: "neutral",
 };
-
-/** Value, or the caller's placeholder — never a substituted zero. */
-export function orDash(formatted, fallback = "—") {
-  return formatted === null || formatted === undefined ? fallback : formatted;
-}

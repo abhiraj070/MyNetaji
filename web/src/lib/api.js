@@ -202,13 +202,11 @@ export async function castCmVote({ name, stateKey, choice }) {
  * `PATCH /update-member-count` — increments an MP's slap or rose tally by one,
  * identified by (constituency_key, name).
  *
- * KNOWN BACKEND FAULT (2026-08-08): this endpoint currently fails for every
- * request with `subject table for an INSERT, UPDATE or DELETE expected, got
- * 'mps'` — the handler passes the table *name* as a string where SQLAlchemy
- * needs the Table object. Verified against a deliberately non-matching row, so
- * nothing was written. The call is wired correctly here and will start working
- * the moment the handler is fixed; until then an MP verdict surfaces the same
- * error state any failed vote does. Not fixed here: this is frontend work.
+ * The backend fault this used to carry a note about is fixed: the handler
+ * resolves "mps" to the reflected Table and the call returns `rows_updated`.
+ * Unlike the CM and minister endpoints it does not touch a `*_count_today`
+ * column, because `mps` has none — MPs are absent from the daily
+ * most-slapped/most-roasted tiles for that reason.
  */
 export async function castMpVote({ name, constituencyKey, choice }) {
   const { data } = await api.patch("/update-member-count", {
