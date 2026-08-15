@@ -1,7 +1,9 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import MetaData, Table, and_, func, select
 from sqlalchemy.orm import Session
 
+from app.Auth.VerifyJWT import get_current_user
 from app.api.tables import mp
 from app.db.connect import engine, get_db
 from app.schema import GetMpPerformanceListRequest, GetMpPerformanceRequest
@@ -401,7 +403,9 @@ def get_mp_performance(request: GetMpPerformanceRequest, db: Session = Depends(g
 
 @router.post("/get-mp-performance-works")
 def get_mp_performance_works(request: GetMpPerformanceListRequest,
-                             db: Session = Depends(get_db)):
+                             db: Session = Depends(get_db),
+                             userid: int = Depends(get_current_user)
+                             ):
     page, size, _ = paging(request)
     return {"works": works_page(db, request.id, page=page, size=size,
                                 status=request.status)}
@@ -409,7 +413,8 @@ def get_mp_performance_works(request: GetMpPerformanceListRequest,
 
 @router.post("/get-mp-performance-questions")
 def get_mp_performance_questions(request: GetMpPerformanceListRequest,
-                                 db: Session = Depends(get_db)):
+                                 db: Session = Depends(get_db),
+                                 userid: int = Depends(get_current_user)):
     page, size, _ = paging(request)
     return {"questions": questions_page(db, request.id, page=page, size=size,
                                         question_type=request.question_type)}
@@ -417,6 +422,7 @@ def get_mp_performance_questions(request: GetMpPerformanceListRequest,
 
 @router.post("/get-mp-performance-debates")
 def get_mp_performance_debates(request: GetMpPerformanceListRequest,
-                               db: Session = Depends(get_db)):
+                               db: Session = Depends(get_db),
+                               userid: int = Depends(get_current_user)):
     page, size, _ = paging(request)
     return {"debates": debates_page(db, request.id, page=page, size=size)}

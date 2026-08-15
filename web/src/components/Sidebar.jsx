@@ -1,9 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, Globe, MessageCircle, Sparkles, X } from "lucide-react";
+import { ChevronRight, Globe, LogOut, MessageCircle, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { useLogout, useSession } from "@/hooks/useSession";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_SHEET } from "@/lib/motion";
 
@@ -16,6 +18,13 @@ import { SPRING_SHEET } from "@/lib/motion";
  * array entry. Feedback lives here rather than in the header, where Live News
  * took its place; the tutorial replay moved here from the foot of the
  * information tabs, where it repeated under all four of them.
+ *
+ * Sign-out sits apart from that list, at the foot of the drawer: it is the one
+ * control here that ends the session rather than adjusting it, and putting it
+ * in the row stack would make it a fourth setting. It reads the session itself
+ * rather than taking it as a prop — the account is the drawer's own business,
+ * and threading user/handler/pending through the page for one button is more
+ * wiring than it saves.
  */
 export function Sidebar({
   open,
@@ -25,6 +34,9 @@ export function Sidebar({
   onReplayTutorial,
 }) {
   const { t, language, languages } = useTranslation();
+  const router = useRouter();
+  const { user, isAuthenticated } = useSession();
+  const logout = useLogout();
 
   // Lock body scroll and wire Escape while open — mirrors BottomSheet so every
   // overlay in the app behaves the same way.
@@ -106,7 +118,9 @@ export function Sidebar({
               </button>
             </div>
 
-            <nav className="px-4">
+            {/* `flex-1` so the account block below is pushed to the foot of
+                the drawer rather than sitting directly under the last row. */}
+            <nav className="flex-1 px-4">
               <ul className="space-y-2">
                 {items.map(({ key, icon: Icon, label, value, onClick }) => (
                   <li key={key}>
@@ -136,6 +150,55 @@ export function Sidebar({
                 ))}
               </ul>
             </nav>
+
+            {isAuthenticated && (
+              <div className="border-t border-rule px-4 pt-4 pb-6">
+                {/* Whose account this is. Sign-out with no name attached is a
+                    button you have to think about; with one, it is obvious. */}
+                <p className="px-1 pb-2 text-[11px] leading-tight font-medium text-faint">
+                  {t("nav.signedInAs")}{" "}
+                  <span className="font-semibold text-muted">
+                    {user?.email ?? user?.name}
+                  </span>
+                </p>
+
+                <motion.button
+                  type="button"
+                  disabled={logout.isPending}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={async () => {
+                    try {
+                      await logout.mutateAsync();
+                    } catch {
+                      // The row shows the failure and stays put; the drawer
+                      // does not close, so the reader can simply press again.
+                      return;
+                    }
+                    onClose();
+                    // `replace`, not `push`: the app they just left should not
+                    // be one Back press away from a signed-out session.
+                    router.replace("/auth");
+                  }}
+                  className="flex w-full items-center gap-3 rounded-control bg-surface-2 px-4 py-3.5 text-left ring-1 ring-ink/5 transition-colors hover:bg-slap-wash/50 disabled:opacity-60"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slap-wash text-slap-strong">
+                    <LogOut className="size-4" strokeWidth={2.25} />
+                  </span>
+                  <span className="min-w-0 flex-1 font-display text-sm font-bold text-ink">
+                    {logout.isPending ? t("nav.loggingOut") : t("nav.logout")}
+                  </span>
+                </motion.button>
+
+                {logout.isError && (
+                  <p
+                    role="alert"
+                    className="mt-2 px-1 text-[11px] font-semibold text-slap-strong"
+                  >
+                    {t("nav.logoutFailed")}
+                  </p>
+                )}
+              </div>
+            )}
           </motion.aside>
         </div>
       )}

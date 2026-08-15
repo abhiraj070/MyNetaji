@@ -11,7 +11,7 @@ import { BottomActions } from "@/components/BottomActions";
 import { PillTabs } from "@/components/Leaderboard";
 import { HOME_TOUR_STEPS } from "@/components/onboarding/homeTour";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
-import { useSession, startGoogleLogin } from "@/hooks/useSession";
+import { useSession } from "@/hooks/useSession";
 import { LocationPermission } from "@/components/auth/LocationPermission";
 import { DataFreshnessLine } from "@/components/DataFreshness";
 import { ProfileIdentityCard } from "@/components/profile/ProfileIdentityCard";
@@ -401,7 +401,7 @@ export function Home() {
         // The landing page scrolls now, so it fills the column rather than
         // being centred in it — `items-center` would pin a tall page mid-screen.
         <div className="flex-1">
-          <Landing onContinueWithGoogle={startGoogleLogin} />
+          <Landing />
         </div>
       )}
 

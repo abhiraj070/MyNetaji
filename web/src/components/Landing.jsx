@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { PaintedTricolour } from "./landing/PaintedTricolour";
-import { GoogleButton } from "@/components/auth/GoogleButton";
+import { ContinueWithGoogle } from "@/components/auth/ContinueWithGoogle";
 import { XLogo } from "./x/XLogo";
 import { SPRING_ENTRANCE } from "@/lib/motion";
 
@@ -96,13 +96,11 @@ const PREVIEW_TIMELINE = [
   { year: "2014", label: "Minister of State" },
 ];
 
-export function Landing({ onContinueWithGoogle }) {
+export function Landing() {
   // Sign-in is the entry now: the reader authenticates first, and location is
   // asked for on the far side of that. The button says exactly what pressing
   // it does — the old "Find Your CM & MP" promised the step after this one.
-  const cta = (
-    <GoogleButton onClick={onContinueWithGoogle} className="sm:w-auto" />
-  );
+  const cta = <ContinueWithGoogle className="sm:w-auto" />;
 
   return (
     <div className="w-full">

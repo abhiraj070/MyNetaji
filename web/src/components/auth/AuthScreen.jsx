@@ -2,9 +2,8 @@
 
 import { motion } from "framer-motion";
 
-import { GoogleButton } from "./GoogleButton";
+import { ContinueWithGoogle } from "./ContinueWithGoogle";
 import { PaintedTricolour } from "@/components/landing/PaintedTricolour";
-import { startGoogleLogin } from "@/hooks/useSession";
 import { useTranslation } from "@/lib/i18n";
 import { rise } from "@/lib/motion";
 
@@ -15,23 +14,12 @@ import { rise } from "@/lib/motion";
  * provider to weigh up and no "or" divider — the whole screen is a single
  * decision, which is what makes it feel like a door rather than a gate.
  *
- * `error` is a code from the backend's callback (`?auth_error=…`), mapped to a
- * sentence here rather than shown raw. Each one says what happened and leaves
- * the same button in place to try again, because every failure in this flow is
- * retryable.
+ * Sign-in happens in a Google popup on this page, so nothing leaves and comes
+ * back with a reason in the URL any more: whatever went wrong is reported by
+ * `ContinueWithGoogle`, right under the button that will try again.
  */
-const ERROR_COPY = {
-  access_denied: "auth.cancelled",
-  state_mismatch: "auth.stateMismatch",
-  exchange_failed: "auth.exchangeFailed",
-  no_profile: "auth.noProfile",
-  session_expired: "auth.sessionExpired",
-  unreachable: "auth.unreachable",
-};
-
-export function AuthScreen({ error = null }) {
+export function AuthScreen() {
   const { t } = useTranslation();
-  const message = error ? t(ERROR_COPY[error] ?? "auth.exchangeFailed") : null;
 
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden">
@@ -59,18 +47,8 @@ export function AuthScreen({ error = null }) {
           {t("auth.blurb")}
         </motion.p>
 
-        {message && (
-          <motion.p
-            {...rise(0.16)}
-            role="alert"
-            className="mx-auto mt-6 max-w-sm rounded-card bg-slap-wash px-4 py-3 text-xs leading-relaxed font-semibold text-slap-strong ring-1 ring-slap/15 ring-inset"
-          >
-            {message}
-          </motion.p>
-        )}
-
         <motion.div {...rise(0.2)} className="mt-8 flex flex-col items-center gap-3">
-          <GoogleButton onClick={startGoogleLogin} className="w-full" />
+          <ContinueWithGoogle />
           <p className="text-[11px] font-medium text-faint">{t("auth.privacy")}</p>
         </motion.div>
       </div>

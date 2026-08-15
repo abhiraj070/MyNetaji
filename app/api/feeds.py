@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 import httpx
 
+from app.Auth.VerifyJWT import get_current_user
 from app.api.localisation import HINDI
 from app.api.tables import cm, minister
 from app.config.settings import get_settings
@@ -20,7 +21,7 @@ X_SEARCH_URL = "https://api.x.com/2/tweets/search/recent"
 
 
 @router.post("/tweets")
-async def get_tweets(request: TweetRequest, db: Session= Depends(get_db)):
+async def get_tweets(request: TweetRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     table= request.table
     name= request.name
     if table == "chief_ministers":
@@ -77,7 +78,7 @@ async def get_tweets(request: TweetRequest, db: Session= Depends(get_db)):
 
 
 @router.get("/get-news")
-async def get_news(lang: str = "en"):
+async def get_news(lang: str = "en", userid: int = Depends(get_current_user)):
     key= "hindi_news" if lang == HINDI else "english_news"
     res= await redis_client.get(key)
     try:

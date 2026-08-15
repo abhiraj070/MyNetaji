@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -7,8 +6,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import text
 
 from app.db.connect import engine
-
-logger = logging.getLogger("uvicorn.error")
 
 _LOCK_KEY = 8_412_553_001
 
@@ -47,7 +44,6 @@ def _zone():
     try:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError):
-        logger.warning("Timezone %s unavailable; falling back to UTC.", name)
         return ZoneInfo("UTC")
 
 
@@ -95,11 +91,13 @@ def run_daily_reset():
 async def _reset_loop():
     while True:
         try:
-            logger.info("Daily counter reset: %s", await asyncio.to_thread(run_daily_reset))
+            await asyncio.to_thread(run_daily_reset)
         except asyncio.CancelledError:
             raise
         except Exception:
-            logger.exception("Daily counter reset failed; retrying at the next boundary.")
+            # Swallowed on purpose: a failed reset must not kill the loop, and
+            # the next boundary retries it.
+            pass
 
         await asyncio.sleep(seconds_until_next_midnight())
 

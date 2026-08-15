@@ -10,9 +10,9 @@ export const metadata = {
 /**
  * `/auth` — the sign-in screen.
  *
- * Wrapped in `Suspense` because the client component reads `useSearchParams`
- * (for the `?auth_error=` the backend callback sends back), which opts the
- * route into client-side rendering and needs a boundary above it.
+ * Wrapped in `Suspense` because everything below it is client-rendered: the
+ * screen has to know whether there is already a session before it can decide
+ * between showing the button and redirecting to the app.
  */
 export default function Page() {
   return (

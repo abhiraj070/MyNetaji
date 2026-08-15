@@ -1,7 +1,9 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
+from app.Auth.VerifyJWT import get_current_user
 from app.api.localisation import MINISTER_NAME_EN, minister_columns
 from app.api.tables import minister
 from app.db.connect import get_db
@@ -11,7 +13,7 @@ router = APIRouter(tags=["Union Ministers"])
 
 
 @router.post("/get-minister")
-def get_minister(request: MinistrySearchRequest, db: Session= Depends(get_db)):
+def get_minister(request: MinistrySearchRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     minister_name= request.name
     lang= request.lang
     stmt= select(
@@ -30,7 +32,7 @@ def get_minister(request: MinistrySearchRequest, db: Session= Depends(get_db)):
 
 
 @router.post("/get-ministers-by-name")
-def get_minister_by_name(request: GetMinisterRequest, db: Session= Depends(get_db)):
+def get_minister_by_name(request: GetMinisterRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     name= request.name
     ministry= request.ministry
     stmt= (
@@ -44,7 +46,12 @@ def get_minister_by_name(request: GetMinisterRequest, db: Session= Depends(get_d
 
 
 @router.get("/get-leaderboard-minister")
-def get_leaderboard_minister(limit:int= Query(10,ge=1,le=100), offset: int= Query(0,ge=0,le=100), lang: str= Query("en"), db: Session= Depends(get_db)):
+def get_leaderboard_minister(limit:int= Query(10,ge=1,le=100),
+                             offset: int= Query(0,ge=0,le=100),
+                             lang: str= Query("en"),
+                             db: Session= Depends(get_db),
+                             userid: int = Depends(get_current_user)
+):
     cols= (*minister_columns(lang, "minister_name", "party", "ministry"),
            MINISTER_NAME_EN,
            minister.c.photo_url, minister.c.slap_count, minister.c.rose_count)
@@ -62,7 +69,7 @@ def get_leaderboard_minister(limit:int= Query(10,ge=1,le=100), offset: int= Quer
 
 
 @router.patch("/update-ministry-count")
-def update_ministry_count(request: UpdateMinistryRequest, db: Session= Depends(get_db)):
+def update_ministry_count(request: UpdateMinistryRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     field= request.field_to_update
     name= request.name_field_to_update
     ministry_name= request.ministry_name

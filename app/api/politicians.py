@@ -1,7 +1,9 @@
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.Auth.VerifyJWT import get_current_user
 from app.api.localisation import milestone_columns
 from app.api.tables import milestones, politician, wealth
 from app.db.connect import get_db
@@ -11,7 +13,7 @@ router = APIRouter(tags=["Politician records"])
 
 
 @router.post("/get-assets")
-def get_assets(request: GetAssetsRequest, db: Session = Depends(get_db)):
+def get_assets(request: GetAssetsRequest, db: Session = Depends(get_db), userid: int = Depends(get_current_user)):
     name= request.name
     designation= request.designation
     stmt1= (select(politician.c.id).where((politician.c.canonical_name==name) & (politician.c.subject_type==designation)))
@@ -26,7 +28,7 @@ def get_assets(request: GetAssetsRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/get-timeline")
-def get_timeline(request: GetAssetsRequest, db: Session = Depends(get_db)):
+def get_timeline(request: GetAssetsRequest, db: Session = Depends(get_db), userid: int = Depends(get_current_user)):
     name= request.name
     designation= request.designation
     lang= request.lang

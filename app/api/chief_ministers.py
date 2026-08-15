@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
-
+from app.Auth.VerifyJWT import get_current_user
 from app.api.localisation import CM_NAME_EN, cm_columns
 from app.api.tables import cm, pc
 from app.db.connect import get_db
@@ -21,7 +21,7 @@ def _cm_columns(lang):
 
 
 @router.post("/get-cm-location")
-def get_cm_location(request: LocationRequest, db: Session= Depends(get_db)):
+def get_cm_location(request: LocationRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     latitude= request.latitude
     longitude= request.longitude
     lang= request.lang
@@ -40,7 +40,7 @@ def get_cm_location(request: LocationRequest, db: Session= Depends(get_db)):
 
 
 @router.post("/get-cm")
-def get_cm(request: GetCmRequest, db: Session= Depends(get_db)):
+def get_cm(request: GetCmRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     """One Chief Minister by state, or all of them when no state is given."""
     state_key= request.state_key
     lang= request.lang
@@ -55,7 +55,12 @@ def get_cm(request: GetCmRequest, db: Session= Depends(get_db)):
 
 
 @router.get("/get-leaderboard-cm")
-def get_leaderboard_cm(offset:int= Query(0,ge=0,le=100), limit: int= Query(10,ge=1,le=100), lang: str= Query("en"), db: Session= Depends(get_db)):
+def get_leaderboard_cm(offset:int= Query(0,ge=0,le=100),
+                       limit: int= Query(10,ge=1,le=100),
+                       lang: str= Query("en"),
+                       db: Session= Depends(get_db),
+                       userid: int = Depends(get_current_user)
+):
     cols= (*cm_columns(lang, "name", "state"), CM_NAME_EN,
            cm.c.state_key, cm.c.party,
            cm.c.photo_url, cm.c.slap_count, cm.c.rose_count)
@@ -73,8 +78,7 @@ def get_leaderboard_cm(offset:int= Query(0,ge=0,le=100), limit: int= Query(10,ge
 
 
 @router.patch("/update-cm-count")
-def update_cm_count(request: UpdateCmRequest, db: Session= Depends(get_db)):
-    """Record a slap or a rose, on both the all-time and the daily tally."""
+def update_cm_count(request: UpdateCmRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     field= request.field_to_update
     name= request.name_field_to_update
     state_key= request.state_key

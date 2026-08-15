@@ -1,10 +1,12 @@
 import axios from "axios";
 
+import { setUser } from "@/lib/session";
+
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
   timeout: 15_000,
   headers: { "Content-Type": "application/json" },
-  // The session is a pair of httpOnly cookies set by `/auth/google/callback`.
+  // The session is a pair of httpOnly cookies set by `POST /auth/google`.
   // The API is a different origin from the app (different port in dev, a
   // different host in production), so without this the browser sends the
   // request but not the cookies, and every authenticated call looks signed
@@ -48,6 +50,22 @@ api.interceptors.request.use((config) => {
     config.data = { ...config.data, lang };
   }
   return config;
+});
+
+/**
+ * The cookie is the only thing that decides whether a session is real, and the
+ * app cannot inspect it — so a 401 is how it finds out the session has ended.
+ * Dropping the remembered user here is what turns an expired session back into
+ * the sign-in screen instead of a page of failed requests.
+ *
+ * Sign-in itself is exempt: a rejected credential means the attempt failed, and
+ * whoever was signed in before it should stay that way.
+ */
+api.interceptors.response.use(undefined, (error) => {
+  const status = error?.response?.status;
+  const url = error?.config?.url ?? "";
+  if (status === 401 && !url.startsWith("/auth/")) setUser(null);
+  return Promise.reject(error);
 });
 
 /**
@@ -1001,44 +1019,48 @@ export async function fetchDataFreshness() {
   );
 }
 
-/** Where the browser goes to start Google sign-in. */
-export function googleLoginUrl() {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  return `${base.replace(/\/$/, "")}/auth/google_login`;
+/**
+ * `POST /auth/google` — trade the credential Google's popup returned for a
+ * session, and get back the signed-in user.
+ *
+ * The credential is an ID token signed by Google; the backend is what checks
+ * that signature. Nothing about the reader is sent from here — not the email,
+ * not the name — because anything this page claims about who it is would be
+ * unverifiable. The session comes back as httpOnly cookies on the response,
+ * which is why this goes through `api` (and its `withCredentials`) rather than
+ * a bare fetch.
+ */
+export async function googleSignIn(credential) {
+  const { data } = await api.post("/auth/google", { credential });
+  const user = data?.user ?? null;
+  // The only time the app is ever told who this is — there is no `/auth/me` to
+  // ask later, so it is remembered now.
+  setUser(user);
+  return user;
 }
 
 /**
- * Hand the browser to the backend, which redirects on to Google.
+ * The machine-readable reason a sign-in failed, for the screen to translate.
  *
- * A full navigation rather than an XHR: the endpoint answers with a 307 to
- * `accounts.google.com`, and fetch would either follow it into a cross-origin
- * response the page cannot read or be blocked by CORS outright. OAuth is a
- * navigation flow, so this navigates.
+ * `/auth/google` answers failures with `{detail: {code, message}}`. Anything
+ * else — no response at all, or a shape we don't recognise — is reported as
+ * what it looks like from here rather than guessed at.
  */
-export function startGoogleLogin() {
-  if (typeof window === "undefined") return;
-  window.location.href = googleLoginUrl();
-}
-
-/**
- * `GET /auth/me` — the signed-in user, or `null` when there is no session.
- *
- * The cookies are httpOnly, so this request is the only way the client can
- * find out whether it is signed in. A 401 is an answer, not a failure: it
- * resolves to `null` so callers can branch on it without a try/catch, while a
- * network or server fault still throws and surfaces as an error state.
- */
-export async function fetchSession() {
-  try {
-    const { data } = await api.get("/auth/me");
-    return data?.user ?? null;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) return null;
-    throw error;
-  }
+export function authErrorCode(error) {
+  if (!error) return null;
+  if (!axios.isAxiosError(error) || !error.response) return "unreachable";
+  const detail = error.response.data?.detail;
+  if (detail && typeof detail === "object" && detail.code) return detail.code;
+  return error.response.status >= 500 ? "server_error" : "invalid_credential";
 }
 
 /** `POST /auth/logout` — clears both session cookies server-side. */
 export async function logoutSession() {
-  await api.post("/auth/logout", {});
+  try {
+    await api.post("/auth/logout", {});
+  } finally {
+    // Signed out locally either way: leaving the reader looking signed in
+    // because the request failed would be the worse of the two outcomes.
+    setUser(null);
+  }
 }

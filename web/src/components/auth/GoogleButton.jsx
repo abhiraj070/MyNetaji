@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 
+import { useGoogleIdentity } from "@/hooks/useGoogleIdentity";
 import { SPRING_PRESS } from "@/lib/motion";
 import { useTranslation } from "@/lib/i18n";
 
@@ -18,6 +20,14 @@ import { useTranslation } from "@/lib/i18n";
  * Google's guidance is about the mark and the wording, and both are intact;
  * dropping their exact button into this app would look like a pasted-in
  * fragment of somebody else's product.
+ *
+ * What actually takes the click is Google's own button, transparent and
+ * stretched over this one by `useGoogleIdentity` — the account-chooser popup
+ * only opens from a button GIS rendered itself. So while that overlay is live
+ * the visible button is decoration: hidden from assistive tech and skipped by
+ * the tab key, because the real, labelled control is sitting on top of it. If
+ * GIS never loads, the overlay is not there and this button becomes the real
+ * one again, retrying the load when pressed.
  */
 function GoogleMark({ className = "size-5" }) {
   return (
@@ -42,20 +52,59 @@ function GoogleMark({ className = "size-5" }) {
   );
 }
 
-export function GoogleButton({ onClick, isBusy = false, className = "" }) {
-  const { t } = useTranslation();
+export function GoogleButton({
+  onCredential,
+  onUnavailable,
+  isBusy = false,
+  className = "",
+}) {
+  const { t, language } = useTranslation();
+  const { frameRef, containerRef, isReady, isUnavailable, retry, gisSize } =
+    useGoogleIdentity(onCredential, language);
+
+  useEffect(() => {
+    onUnavailable?.(isUnavailable);
+  }, [isUnavailable, onUnavailable]);
+
+  // The overlay stops taking clicks while the credential is being exchanged,
+  // so a second press cannot open a second popup mid-sign-in.
+  const overlayLive = isReady && !isBusy;
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={isBusy}
-      whileTap={isBusy ? undefined : { scale: 0.975 }}
-      transition={SPRING_PRESS}
-      className={`inline-flex w-full items-center justify-center gap-3 rounded-full bg-surface px-6 py-3.5 font-display text-sm font-bold text-ink shadow-card ring-1 ring-ink/10 ring-inset transition-shadow hover:shadow-lift disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:w-auto ${className}`}
-    >
-      <GoogleMark />
-      {isBusy ? t("auth.redirecting") : t("auth.continueWithGoogle")}
-    </motion.button>
+    <div className={`relative inline-flex w-full ${className}`}>
+      <motion.button
+        type="button"
+        onClick={isUnavailable ? retry : undefined}
+        disabled={isBusy}
+        aria-hidden={overlayLive}
+        tabIndex={overlayLive ? -1 : 0}
+        whileTap={isBusy ? undefined : { scale: 0.975 }}
+        transition={SPRING_PRESS}
+        className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-surface px-6 py-3.5 font-display text-sm font-bold text-ink shadow-card ring-1 ring-ink/10 ring-inset transition-shadow hover:shadow-lift disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      >
+        <GoogleMark />
+        {isBusy ? t("auth.signingIn") : t("auth.continueWithGoogle")}
+      </motion.button>
+
+      {/* Google's button. Transparent, not hidden: `visibility` or `display`
+          would stop it rendering, and it has to be a real, hit-testable
+          element for the popup to count as user-initiated. */}
+      <div
+        ref={frameRef}
+        aria-hidden={!overlayLive}
+        className={`absolute inset-0 overflow-hidden rounded-full opacity-0 ${
+          overlayLive ? "" : "pointer-events-none"
+        }`}
+      >
+        <div
+          ref={containerRef}
+          style={{
+            width: gisSize.width,
+            height: gisSize.height,
+            transformOrigin: "top left",
+          }}
+        />
+      </div>
+    </div>
   );
 }

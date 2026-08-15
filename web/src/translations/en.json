@@ -19,7 +19,11 @@
     "backToCm": "← Back to your CM",
     "startOver": "Start over",
     "language": "Language",
-    "actions": "Actions"
+    "actions": "Actions",
+    "signedInAs": "Signed in as",
+    "logout": "Log out",
+    "loggingOut": "Signing out…",
+    "logoutFailed": "Couldn't sign out. Try again."
   },
   "onboarding": {
     "gotIt": "Got it",
@@ -393,7 +397,6 @@
   },
   "auth": {
     "continueWithGoogle": "Continue with Google",
-    "redirecting": "Taking you to Google…",
     "welcome": "Know who represents you.",
     "blurb": "Sign in to find your MP, MLA and Chief Minister — their record, their promises, and your verdict.",
     "privacy": "We only use your Google account to sign you in.",
@@ -401,8 +404,12 @@
     "failedTitle": "That sign-in didn't go through",
     "cancelled": "You cancelled the Google sign-in. No harm done — try again when you're ready.",
     "exchangeFailed": "We couldn't complete sign-in with Google. Please try again.",
-    "stateMismatch": "That sign-in link expired. Please start again.",
+    "expiredCredential": "That Google sign-in took too long. Please try again.",
+    "emailUnverified": "That Google account's email address isn't verified, so we can't sign you in.",
     "noProfile": "Google didn't share an email for that account, so we can't sign you in.",
+    "googleUnreachable": "We couldn't reach Google to check that sign-in. Please try again.",
+    "googleUnavailable": "We couldn't load Google sign-in. Check your connection or any ad blocker, then tap the button to retry.",
+    "serverError": "Something went wrong on our side. Please try again in a moment.",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "unreachable": "We couldn't reach the server. Check your connection and try again.",
     "retry": "Try again",

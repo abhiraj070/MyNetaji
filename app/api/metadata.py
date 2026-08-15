@@ -1,22 +1,3 @@
-"""When the political data behind each tier was last pulled from its source.
-
-The profile screens present affidavit facts — assets, liabilities, criminal
-cases, education — that come from MyNeta, the Association for Democratic
-Reforms' public database of election affidavits. Those figures are only as
-current as the last ingestion run, and a reader looking at a politician's
-declared wealth deserves to know whether that was fetched last week or last
-year.
-
-The date is read from the data itself rather than configured: each importer
-stamps `fetched_at` on the rows it writes, so the freshest stamp in a tier's
-source tables *is* that tier's last update. Nothing here needs touching when a
-refresh runs — re-run the importer and the date moves on its own.
-
-Served as one small endpoint rather than as a field on every politician
-payload: it is a property of the dataset, not of the person, so it would be the
-same value repeated on all 543 rows of a list response. One request, cached by
-the client, covers every screen.
-"""
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
@@ -55,11 +36,6 @@ _FRESHNESS = text("""
 @router.get("/get-data-freshness")
 def get_data_freshness(db: Session = Depends(get_db)):
     row = db.execute(_FRESHNESS).mappings().first() or {}
-
-    # `DATA_UPDATED_AT` states the date the dataset is published as current
-    # for. When set it is what every tier reports, because it is a claim about
-    # the data as a whole; the per-tier `fetched_at` maxima remain the fallback
-    # and remain untouched either way.
     declared = _declared_date()
 
     datasets = {
@@ -71,11 +47,6 @@ def get_data_freshness(db: Session = Depends(get_db)):
 
 
 def _declared_date():
-    """`DATA_UPDATED_AT` as a datetime, or None if unset or unparseable.
-
-    A malformed value falls back to the ingestion stamps rather than failing
-    the request: a wrong-looking date is worse than the real one.
-    """
     raw = (_settings.DATA_UPDATED_AT or "").strip()
     if not raw:
         return None

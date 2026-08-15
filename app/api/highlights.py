@@ -1,7 +1,9 @@
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.Auth.VerifyJWT import get_current_user
 from app.api.localisation import (
     CM_NAME_EN,
     MINISTER_NAME_EN,
@@ -64,7 +66,7 @@ def _highlight(db, cm_count, minister_count, key, lang="en"):
 
 
 @router.get("/most-slapped")
-def get_most_slapped(lang: str = Query("en"), db: Session = Depends(get_db)):
+def get_most_slapped(lang: str = Query("en"), db: Session = Depends(get_db), userid: int = Depends(get_current_user)):
     return _highlight(
         db,
         _today(cm.c.slap_count_today),
@@ -75,7 +77,7 @@ def get_most_slapped(lang: str = Query("en"), db: Session = Depends(get_db)):
 
 
 @router.get("/most-roasted")
-def get_most_roasted(lang: str = Query("en"), db: Session = Depends(get_db)):
+def get_most_roasted(lang: str = Query("en"), db: Session = Depends(get_db), userid: int = Depends(get_current_user)):
     return _highlight(
         db,
         _today(cm.c.rose_count_today),
@@ -86,7 +88,7 @@ def get_most_roasted(lang: str = Query("en"), db: Session = Depends(get_db)):
 
 
 @router.get("/most-judged")
-def get_most_judged(lang: str = Query("en"), db: Session = Depends(get_db)):
+def get_most_judged(lang: str = Query("en"), db: Session = Depends(get_db), userid: int = Depends(get_current_user)):
     return _highlight(
         db,
         _today(cm.c.slap_count_today) + _today(cm.c.rose_count_today),

@@ -1,7 +1,9 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
+from app.Auth.VerifyJWT import get_current_user
 from app.api.localisation import (
     HINDI,
     MP_NAME_EN,
@@ -10,7 +12,7 @@ from app.api.localisation import (
     mp_localised,
     with_mp_hindi,
 )
-from app.api.tables import count, manifesto, mp, mp_hindi, mp_milestone, pc
+from app.api.tables import manifesto, mp, mp_hindi, mp_milestone, pc
 from app.db.connect import get_db
 from app.schema import (
     GetMpRequest,
@@ -23,7 +25,7 @@ router = APIRouter(tags=["MPs"])
 
 
 @router.post("/get-location")
-def get_location(request: LocationRequest, db: Session= Depends(get_db)):
+def get_location(request: LocationRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
 
     latitude= request.latitude
     longitude= request.longitude
@@ -48,14 +50,11 @@ def get_location(request: LocationRequest, db: Session= Depends(get_db)):
     stmt= stmt.where(func.ST_Contains(pc.c.geom, user_point))
 
     final_mp= localise_points(db.execute(stmt).mappings().first(), lang)
-    stmt2= (update(count).where(count.c.id==123).values(cnt= count.c["cnt"]+1))
-    db.execute(stmt2)
-    db.commit()
     return {"mp": final_mp}
 
 
 @router.post("/get-mps-by-name")
-def get_mp_by_name(request: GetMpRequest, db: Session= Depends(get_db)):
+def get_mp_by_name(request: GetMpRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     name= request.name
     mp_id= request.id
     constituency_key= request.constituency_key
@@ -97,7 +96,7 @@ def get_mp_by_name(request: GetMpRequest, db: Session= Depends(get_db)):
 
 
 @router.post("/get-mp-timeline")
-def get_mp_timeline(request: GetMpTimelineRequest, db: Session= Depends(get_db)):
+def get_mp_timeline(request: GetMpTimelineRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     stmt= (select(mp_milestone.c.id, mp_milestone.c.start_date, mp_milestone.c.end_date,
                   mp_milestone.c.position_title, mp_milestone.c.position_rank,
                   mp_milestone.c.election_type, mp_milestone.c.entry_mode,
@@ -110,7 +109,12 @@ def get_mp_timeline(request: GetMpTimelineRequest, db: Session= Depends(get_db))
 
 
 @router.get("/get-leaderboard-mp")
-def get_leaderboard_mp(offset:int= Query(0,ge=0,le=100), limit: int= Query(10,ge=1,le=100), lang: str= Query("en"), db: Session= Depends(get_db)):
+def get_leaderboard_mp(offset:int= Query(0,ge=0,le=100),
+                       limit: int= Query(10,ge=1,le=100),
+                       lang: str= Query("en"),
+                       db: Session= Depends(get_db),
+                        userid: int = Depends(get_current_user)
+):
     mp_name, _mp_state, mp_constituency= mp_localised(lang)
     cols= (mp.c.id, mp_name, MP_NAME_EN, mp.c.party, mp_constituency,
            mp.c.constituency_key, mp.c.photo_url, mp.c.slap_count, mp.c.rose_count)
@@ -130,7 +134,7 @@ def get_leaderboard_mp(offset:int= Query(0,ge=0,le=100), limit: int= Query(10,ge
 
 
 @router.patch("/update-member-count")
-def update_member_count(request: UpdateMemberRequest, db: Session= Depends(get_db)):
+def update_member_count(request: UpdateMemberRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
     table= request.table_to_update
     name= request.name_field_to_update
     constituency_key= request.constituency_key
