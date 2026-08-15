@@ -8,6 +8,7 @@ import { PerformancePreviewSheet } from "./PerformancePreviewSheet";
 import { ProfileOverviewTab } from "./ProfileOverviewTab";
 import { ProfileJourneyTab } from "./ProfileJourneyTab";
 import { ProfileManifestosTab } from "./ProfileManifestosTab";
+import { ProfilePerformanceTab } from "./ProfilePerformanceTab";
 import { useTranslation } from "@/lib/i18n";
 import { subjectKeyOf } from "@/lib/subject";
 
@@ -34,11 +35,11 @@ const TABS = [
   { value: "overview", key: "profile.overview" },
   { value: "manifestos", key: "profile.manifestos" },
   { value: "journey", key: "profile.journey" },
-  // Locked: pressing it opens a preview of what Performance will hold rather
-  // than switching to an empty section. It stays in the row (rather than
-  // waiting until launch) because seeing it is the point — the reader learns
-  // the feature exists and is being built.
-  { value: "performance", key: "profile.performance", locked: true },
+  // Open for MPs, still locked for everyone else. Performance is built on the
+  // MPLADS scheme and Lok Sabha activity, both of which exist per MP and have
+  // no counterpart for a Chief Minister or a Union Minister — so the preview
+  // sheet remains the honest answer for them rather than an empty dashboard.
+  { value: "performance", key: "profile.performance" },
 ];
 
 export function ProfilePanel({
@@ -53,6 +54,7 @@ export function ProfilePanel({
 }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState("overview");
+  const performanceUnlocked = subject?.tier === "mp";
   const [assetsOpen, setAssetsOpen] = useState(false);
   const [performanceOpen, setPerformanceOpen] = useState(false);
 
@@ -69,10 +71,11 @@ export function ProfilePanel({
     setPerformanceOpen(false);
   }
 
-  // The locked tab is a door to a preview, not a section: pressing it leaves
-  // the current tab exactly where it was.
+  // While Performance is still locked (everyone who is not an MP), the tab is
+  // a door to a preview rather than a section: pressing it leaves the current
+  // tab exactly where it was.
   const handleTabChange = (next) => {
-    if (next === "performance") {
+    if (next === "performance" && !performanceUnlocked) {
       setPerformanceOpen(true);
       return;
     }
@@ -93,7 +96,11 @@ export function ProfilePanel({
       >
         <div className={`no-scrollbar overflow-x-auto ${gutterClass}`}>
           <PillTabs
-            options={TABS.map((entry) => ({ ...entry, label: t(entry.key) }))}
+            options={TABS.map((entry) => ({
+              ...entry,
+              label: t(entry.key),
+              locked: entry.value === "performance" && !performanceUnlocked,
+            }))}
             value={tab}
             onChange={handleTabChange}
             ariaLabel={t("profile.sectionAria")}
@@ -110,6 +117,12 @@ export function ProfilePanel({
       {tab === "manifestos" && <ProfileManifestosTab subject={subject} />}
       {tab === "journey" && (
         <ProfileJourneyTab
+          subject={subject}
+          onOpenAssets={() => setAssetsOpen(true)}
+        />
+      )}
+      {tab === "performance" && performanceUnlocked && (
+        <ProfilePerformanceTab
           subject={subject}
           onOpenAssets={() => setAssetsOpen(true)}
         />

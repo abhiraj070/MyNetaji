@@ -25,6 +25,8 @@ pc= Table("parliamentary_constituencies", metadata, autoload_with= engine)
 manifesto= Table("party_manifesto_points", metadata, autoload_with=engine)
 mp_hindi= Table("mps_hindi", metadata, autoload_with= engine)
 mp_milestone= Table("mp_political_milestone", metadata, autoload_with= engine)
+mp_wealth= Table("mp_wealth_declaration", metadata, autoload_with= engine)
+cm_criminal= Table("cm_criminal_cases", metadata, autoload_with= engine)
 minister= Table("ministers", metadata, autoload_with= engine)
 cm= Table("chief_ministers", metadata, autoload_with= engine)
 politician= Table("politicians", metadata, autoload_with= engine)
@@ -56,15 +58,6 @@ def milestone_columns(lang, *names):
     return tuple(_localised(milestones, n, lang) for n in names)
 
 def mp_localised(lang):
-    """MP name/state/constituency, Hindi-preferring when asked for.
-
-    `mps` keeps its Hindi in a side table rather than in `*_hindi` columns (see
-    app/db/model/localisation.py), so this coalesces across the join instead of
-    across two columns of one row — same fallback behaviour as `_localised`:
-    a missing translation shows the English text, never a blank.
-
-    Callers must add `mp_hindi_join()` to the statement when lang is Hindi.
-    """
     if lang != HINDI:
         return mp.c.name, mp.c.state, mp.c.constituency
     return (
@@ -75,14 +68,6 @@ def mp_localised(lang):
 
 
 def with_mp_hindi(stmt, lang):
-    """Left-joins the Hindi side table, but only when Hindi is being served.
-
-    `select_from(mp)` is not optional. The coalesced columns already mention
-    `mps_hindi`, which puts it in the FROM clause on its own; joining it again
-    without anchoring the statement to `mps` produced a cross join — every MP
-    paired with every Hindi row, so a search for one name came back 25 times
-    with other people's states attached.
-    """
     if lang != HINDI:
         return stmt
     return stmt.select_from(mp).join(
@@ -91,23 +76,12 @@ def with_mp_hindi(stmt, lang):
 
 
 def manifesto_columns(lang):
-    """The manifesto column(s) to select.
-
-    Both, when Hindi is asked for: `points` is text[] while `points_hindi` is
-    text holding a JSON array, and Postgres cannot COALESCE across those two
-    types. `localise_points` picks between them after the row comes back.
-    """
     if lang != HINDI:
         return (manifesto.c.points,)
     return (manifesto.c.points, manifesto.c.points_hindi)
 
 
 def localise_points(row, lang):
-    """Swaps the Hindi manifesto in and drops the raw column from the response.
-
-    A row with no Hindi translation keeps its English `points`, so a party that
-    has not been translated reads in English rather than coming back empty.
-    """
     if row is None or lang != HINDI:
         return row
     data= dict(row)
@@ -119,6 +93,37 @@ def localise_points(row, lang):
                 data["points"]= parsed
         except (TypeError, ValueError):
             pass
+    return data
+
+MP_WEALTH_FIELDS = (
+    "election_year", "election_name", "source", "source_url",
+    "total_assets", "total_liabilities", "movable_assets", "immovable_assets",
+    "cash", "bank_deposits", "shares_investments", "mutual_funds",
+    "jewellery", "vehicles", "residential_property", "commercial_property",
+    "agricultural_land", "other_assets",
+)
+_WEALTH_PREFIX = "wealth__"
+
+def mp_wealth_columns():
+    return tuple(
+        mp_wealth.c[name].label(f"{_WEALTH_PREFIX}{name}") for name in MP_WEALTH_FIELDS
+    )
+
+
+def with_mp_wealth(stmt):
+    return stmt.join(mp_wealth, mp.c.id == mp_wealth.c.mp_id, isouter=True)
+
+
+def nest_mp_wealth(row):
+    if row is None:
+        return None
+    data, wealth = {}, {}
+    for key, value in row.items():
+        if key.startswith(_WEALTH_PREFIX):
+            wealth[key[len(_WEALTH_PREFIX):]] = value
+        else:
+            data[key] = value
+    data["wealth"] = wealth if any(v is not None for v in wealth.values()) else None
     return data
 
 
@@ -145,7 +150,6 @@ def get_location(request: LocationRequest, db: Session= Depends(get_db)):
                       *manifesto_columns(lang))
                 .select_from(mp)
                 .join(pc, (mp.c.constituency_key==pc.c.constituency_key) & (mp.c.state_key==pc.c.state_key))
-                # Outer: an MP whose party has no manifesto row must still resolve.
                 .join(manifesto, mp.c.party==manifesto.c.party, isouter=True)
         )
         if lang == HINDI:

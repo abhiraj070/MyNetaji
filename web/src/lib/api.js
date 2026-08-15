@@ -650,3 +650,319 @@ function url(value) {
   const trimmed = clean(value);
   return /^https?:\/\//i.test(trimmed) ? trimmed : null;
 }
+
+/**
+ * The metric envelope every headline figure on the Performance tab arrives in:
+ * `{ value, source, derived, formula }`. Normalised here so a component never
+ * has to guess whether a number came back bare or wrapped, and so "no data" is
+ * a single shape rather than three (`null`, `undefined`, `{value: null}`).
+ *
+ * `derived` marks a figure this project calculated rather than read from the
+ * source, and `formula` says how — both are shown in the metric's source
+ * affordance, so a reader can always tell a published number from a computed
+ * one.
+ */
+function toMetric(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const value = toAmount(raw.value);
+  if (value === null && !raw.source) return null;
+  return {
+    value,
+    derived: Boolean(raw.derived),
+    formula: raw.formula ?? null,
+    source: raw.source?.name
+      ? {
+          name: raw.source.name,
+          url: raw.source.url ?? null,
+          asOf: raw.source.asOf ?? null,
+        }
+      : null,
+  };
+}
+
+function toComparisons(list) {
+  return (Array.isArray(list) ? list : []).map((row) => ({
+    scope: row.scope ?? null,
+    scopeValue: row.scopeValue ?? null,
+    average: toAmount(row.average),
+    periodStart: row.periodStart ?? null,
+    periodEnd: row.periodEnd ?? null,
+    source: row.source?.name
+      ? { name: row.source.name, url: row.source.url ?? null }
+      : null,
+  }));
+}
+
+function toPage(raw, mapRow) {
+  const page = raw ?? {};
+  return {
+    items: (Array.isArray(page.items) ? page.items : []).map(mapRow),
+    page: page.page ?? 1,
+    pageSize: page.pageSize ?? 20,
+    total: page.total ?? 0,
+    hasMore: Boolean(page.hasMore),
+  };
+}
+
+/** One MPLADS work, as the project list renders it. */
+function toWork(row) {
+  return {
+    id: row.id,
+    name: row.work_name ?? null,
+    description: row.description ?? null,
+    sector: row.sector ?? null,
+    subSector: row.sub_sector ?? null,
+    // MPLADS publishes nothing finer than the implementing district, so
+    // `location` is usually null and the district stands in for it.
+    location: row.location ?? row.district ?? null,
+    district: row.district ?? null,
+    constituency: row.constituency ?? null,
+    state: row.state ?? null,
+    implementingAgency: row.implementing_agency ?? null,
+    recommendedAmount: toAmount(row.recommended_amount),
+    sanctionedAmount: toAmount(row.sanctioned_amount),
+    expenditureAmount: toAmount(row.expenditure_amount),
+    remainingAmount: toAmount(row.remaining_amount),
+    // The scheme's own wording, kept for display; `statusGroup` is the
+    // three-way reduction the filter uses.
+    status: row.work_status ?? null,
+    statusGroup: row.status_group ?? null,
+    recommendedDate: row.recommended_date ?? null,
+    sanctionDate: row.sanction_date ?? null,
+    startDate: row.work_start_date ?? null,
+    completionDate: row.completion_date ?? null,
+    financialYear: row.financial_year ?? null,
+    source: row.source_name
+      ? { name: row.source_name, url: row.source_url ?? null }
+      : null,
+  };
+}
+
+function toQuestion(row) {
+  return {
+    id: row.id,
+    askedOn: row.asked_on ?? null,
+    title: row.title ?? null,
+    type: row.question_type ?? null,
+    ministry: row.ministry ?? null,
+    session: row.session_name ?? null,
+    source: row.source_name
+      ? { name: row.source_name, url: row.source_url ?? null }
+      : null,
+  };
+}
+
+function toDebate(row) {
+  return {
+    id: row.id,
+    date: row.debate_date ?? null,
+    title: row.title ?? null,
+    type: row.debate_type ?? null,
+    isBill: Boolean(row.is_bill),
+    isPrivateMemberBill: Boolean(row.is_private_member_bill),
+    session: row.session_name ?? null,
+    source: row.source_name
+      ? { name: row.source_name, url: row.source_url ?? null }
+      : null,
+  };
+}
+
+/**
+ * `POST /get-mp-performance` — the whole Performance tab for one MP, by
+ * `mps.id`: MPLADS development work, parliamentary activity, promises and the
+ * affidavit facts the other tabs already show.
+ *
+ * Every section can legitimately be absent. An MP whose seat the MPLADS portal
+ * has not attributed has no `development.funds`, and one whose page PRS has not
+ * published has no `parliament`. Those come back null and the tab says so —
+ * they are not errors, and nothing here substitutes a zero for them.
+ */
+export async function fetchMpPerformance(id) {
+  const { data } = await api.post("/get-mp-performance", { id });
+  const payload = data?.performance;
+  if (!payload) return null;
+
+  const development = payload.development ?? {};
+  const funds = development.funds ?? null;
+  const summary = development.summary ?? {};
+  const parliament = payload.parliament ?? {};
+  const attendance = parliament.attendance ?? {};
+  const questions = parliament.questions ?? {};
+  const debates = parliament.debates ?? {};
+  const bills = parliament.bills ?? {};
+  const committees = parliament.committees ?? {};
+  const promises = payload.promises ?? {};
+  const transparency = payload.transparency ?? null;
+
+  return {
+    mp: payload.mp ?? null,
+    development: {
+      funds: funds
+        ? {
+            period: funds.period ?? null,
+            financialYear: funds.financialYear ?? null,
+            tenure: funds.tenure ?? null,
+            allocated: toMetric(funds.allocated),
+            released: toMetric(funds.released),
+            sanctioned: toMetric(funds.sanctioned),
+            utilised: toMetric(funds.utilised),
+            recommended: toMetric(funds.recommended),
+            unspent: toMetric(funds.unspent),
+            utilisationRate: toMetric(funds.utilisationRate),
+            note: funds.note ?? null,
+          }
+        : null,
+      summary: {
+        totalWorks: summary.totalWorks ?? 0,
+        completed: summary.completed ?? 0,
+        ongoing: summary.ongoing ?? 0,
+        pending: summary.pending ?? 0,
+        unclassified: summary.unclassified ?? 0,
+        completionRate: toMetric(summary.completionRate),
+        recommendedAmount: toAmount(summary.recommendedAmount),
+        sanctionedAmount: toAmount(summary.sanctionedAmount),
+        expenditureAmount: toAmount(summary.expenditureAmount),
+        note: summary.note ?? null,
+      },
+      works: toPage(development.works, toWork),
+    },
+    parliament: {
+      term: parliament.term ?? null,
+      house: parliament.house ?? null,
+      periodStart: parliament.periodStart ?? null,
+      periodEnd: parliament.periodEnd ?? null,
+      attendance: {
+        overall: toMetric(attendance.overall),
+        comparisons: toComparisons(attendance.comparisons),
+        sessions: (Array.isArray(attendance.sessions) ? attendance.sessions : [])
+          .map((row) => ({
+            name: row.session_name ?? null,
+            order: row.session_order ?? null,
+            attendance: toAmount(row.attendance_pct),
+            questions: row.questions_count ?? null,
+            debates: row.debates_count ?? null,
+            source: row.source_name
+              ? { name: row.source_name, url: row.source_url ?? null }
+              : null,
+          }))
+          .filter((row) => row.name),
+      },
+      questions: {
+        total: toMetric(questions.total),
+        starred: toMetric(questions.starred),
+        unstarred: toMetric(questions.unstarred),
+        comparisons: toComparisons(questions.comparisons),
+        items: toPage(questions.items, toQuestion),
+      },
+      debates: {
+        total: toMetric(debates.total),
+        comparisons: toComparisons(debates.comparisons),
+        items: toPage(debates.items, toDebate),
+      },
+      bills: {
+        privateMemberBills: toMetric(bills.privateMemberBills),
+        participated: toMetric(bills.participated),
+        comparisons: toComparisons(bills.comparisons),
+      },
+      committees: {
+        count: toMetric(committees.count),
+        items: (Array.isArray(committees.items) ? committees.items : []).map(
+          (row) => ({
+            name: row.committee_name ?? null,
+            type: row.committee_type ?? null,
+            role: row.role ?? null,
+            startDate: row.start_date ?? null,
+            endDate: row.end_date ?? null,
+            isCurrent: Boolean(row.is_current),
+            source: row.source_name
+              ? { name: row.source_name, url: row.source_url ?? null }
+              : null,
+          }),
+        ),
+      },
+    },
+    promises: {
+      summary: {
+        total: promises.summary?.total ?? 0,
+        completed: promises.summary?.completed ?? 0,
+        inProgress: promises.summary?.inProgress ?? 0,
+        notStarted: promises.summary?.notStarted ?? 0,
+        unverified: promises.summary?.unverified ?? 0,
+      },
+      items: (Array.isArray(promises.items) ? promises.items : []).map((row) => ({
+        id: row.id,
+        text: row.promise_text ?? null,
+        category: row.category ?? null,
+        status: row.status ?? null,
+        madeOn: row.made_on ?? null,
+        context: row.context ?? null,
+        targetDate: row.target_date ?? null,
+        evidence: row.evidence ?? null,
+        evidenceUrl: row.evidence_url ?? null,
+        verifiedOn: row.verified_on ?? null,
+        verifiedBy: row.verified_by ?? null,
+        source: row.source_name
+          ? { name: row.source_name, url: row.source_url ?? null }
+          : null,
+      })),
+    },
+    transparency: transparency
+      ? {
+          criminalCases: transparency.criminalCases ?? null,
+          education: transparency.education ?? null,
+          declaredAssets: toAmount(transparency.declaredAssets),
+          declaredLiabilities: toAmount(transparency.declaredLiabilities),
+          movableAssets: toAmount(transparency.movableAssets),
+          immovableAssets: toAmount(transparency.immovableAssets),
+          electionYear: transparency.electionYear ?? null,
+          electionName: transparency.electionName ?? null,
+          source: transparency.source?.name ? transparency.source : null,
+          note: transparency.note ?? null,
+        }
+      : null,
+  };
+}
+
+/**
+ * `POST /get-mp-performance-works` — one page of MPLADS works, optionally
+ * narrowed to `completed` / `ongoing` / `pending`.
+ *
+ * Paged on the server because a single MP can carry several hundred: the tab
+ * opens with the first page from `fetchMpPerformance` and calls this for the
+ * rest and for every filter change.
+ */
+export async function fetchMpPerformanceWorks({ id, status, page = 1, pageSize = 20 }) {
+  const { data } = await api.post("/get-mp-performance-works", {
+    id,
+    status: status ?? null,
+    page,
+    page_size: pageSize,
+  });
+  return toPage(data?.works, toWork);
+}
+
+/** `POST /get-mp-performance-questions` — one page of questions asked. */
+export async function fetchMpPerformanceQuestions({
+  id,
+  questionType,
+  page = 1,
+  pageSize = 20,
+}) {
+  const { data } = await api.post("/get-mp-performance-questions", {
+    id,
+    question_type: questionType ?? null,
+    page,
+    page_size: pageSize,
+  });
+  return toPage(data?.questions, toQuestion);
+}
+
+/** `POST /get-mp-performance-debates` — one page of debates participated in. */
+export async function fetchMpPerformanceDebates({ id, page = 1, pageSize = 20 }) {
+  const { data } = await api.post("/get-mp-performance-debates", {
+    id,
+    page,
+    page_size: pageSize,
+  });
+  return toPage(data?.debates, toDebate);
+}

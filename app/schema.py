@@ -66,3 +66,23 @@ class UpdateMpsRequest(BaseModel):
     name: str
     constituency_key: str
     field_to_update: str
+
+class GetMpPerformanceRequest(BaseModel):
+    id: int
+    lang: str = "en"
+
+
+class GetMpPerformanceListRequest(BaseModel):
+    """Paged sub-lists of a performance section: works, questions, debates.
+
+    `status` filters MPLADS works to completed / ongoing / pending, and
+    `question_type` to starred / unstarred; both are ignored by the endpoints
+    they do not apply to.
+    """
+
+    id: int
+    lang: str = "en"
+    page: int = 1
+    page_size: int = 20
+    status: Optional[str] = None
+    question_type: Optional[str] = None

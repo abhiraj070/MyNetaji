@@ -7,11 +7,13 @@ from app.db.connect import Base, engine
 
 # Importing the model modules registers their tables on `Base.metadata` so
 # autogenerate can see them. Add new model imports here as they're created.
+from app.db.model import cm_criminal  # noqa: F401
 from app.db.model import daily_counts  # noqa: F401
 from app.db.model import feedback  # noqa: F401
 from app.db.model import journey  # noqa: F401
 from app.db.model import localisation  # noqa: F401
 from app.db.model import mp_journey  # noqa: F401
+from app.db.model import mp_performance  # noqa: F401
 from app.db.model import mp_wealth  # noqa: F401
 
 # Alembic Config object — access to values in alembic.ini.
