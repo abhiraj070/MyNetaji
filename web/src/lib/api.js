@@ -1,7 +1,5 @@
 import axios from "axios";
 
-import { setUser } from "@/lib/session";
-
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
   timeout: 15_000,
@@ -53,18 +51,23 @@ api.interceptors.request.use((config) => {
 });
 
 /**
- * The cookie is the only thing that decides whether a session is real, and the
- * app cannot inspect it — so a 401 is how it finds out the session has ended.
- * Dropping the remembered user here is what turns an expired session back into
- * the sign-in screen instead of a page of failed requests.
+ * The end of a session is something the app can only be told, never ask: the
+ * cookies are httpOnly and there is no `/auth/me` to check them against. A 401
+ * on any ordinary call is that notification — the remembered user is dropped
+ * here, and `useSession` is woken by the event so the app returns to the
+ * sign-in screen instead of a page of failing requests.
  *
- * Sign-in itself is exempt: a rejected credential means the attempt failed, and
- * whoever was signed in before it should stay that way.
+ * It sits on the axios instance rather than in a React Query callback because
+ * this is the one layer every call passes through, whether or not a query is
+ * what made it.
  */
+export const SESSION_ENDED_EVENT = "mynetaji:session-ended";
+
 api.interceptors.response.use(undefined, (error) => {
-  const status = error?.response?.status;
-  const url = error?.config?.url ?? "";
-  if (status === 401 && !url.startsWith("/auth/")) setUser(null);
+  if (isSessionExpired(error)) {
+    rememberUser(null);
+    window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
+  }
   return Promise.reject(error);
 });
 
@@ -1033,9 +1036,7 @@ export async function fetchDataFreshness() {
 export async function googleSignIn(credential) {
   const { data } = await api.post("/auth/google", { credential });
   const user = data?.user ?? null;
-  // The only time the app is ever told who this is — there is no `/auth/me` to
-  // ask later, so it is remembered now.
-  setUser(user);
+  rememberUser(user);
   return user;
 }
 
@@ -1054,13 +1055,62 @@ export function authErrorCode(error) {
   return error.response.status >= 500 ? "server_error" : "invalid_credential";
 }
 
+const SESSION_USER_KEY = "mynetaji:user";
+
+/**
+ * Who was signed in, as told by the last `POST /auth/google`.
+ *
+ * There is no endpoint to ask. The session is a pair of httpOnly cookies that
+ * JavaScript cannot read, so the sign-in response is the only moment the app
+ * ever hears the reader's name — and without keeping it, a reload would show a
+ * perfectly signed-in reader the landing page.
+ *
+ * What is kept is a copy of the answer, not a credential. It authorises
+ * nothing: the cookie still decides every request, and the first 401 throws
+ * this away (see `isSessionExpired`), so a session that has ended cannot leave
+ * the app pretending otherwise.
+ */
+export function rememberUser(user) {
+  try {
+    if (user) window.localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
+    else window.localStorage.removeItem(SESSION_USER_KEY);
+  } catch {
+    /* private mode: the session then lasts as long as the tab does */
+  }
+}
+
+/** The remembered user, or `null`. The query function behind `useSession`. */
+export async function fetchSession() {
+  try {
+    const raw = window.localStorage.getItem(SESSION_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A 401 from anything that is not sign-in itself: the cookies are gone or no
+ * longer valid, whatever the app was remembering.
+ *
+ * Sign-in is excluded because a rejected credential means that attempt failed —
+ * it says nothing about the session someone may already have.
+ */
+export function isSessionExpired(error) {
+  return (
+    axios.isAxiosError(error) &&
+    error.response?.status === 401 &&
+    !(error.config?.url ?? "").startsWith("/auth/")
+  );
+}
+
 /** `POST /auth/logout` — clears both session cookies server-side. */
 export async function logoutSession() {
   try {
     await api.post("/auth/logout", {});
   } finally {
-    // Signed out locally either way: leaving the reader looking signed in
+    // Forgotten locally either way: leaving the reader looking signed in
     // because the request failed would be the worse of the two outcomes.
-    setUser(null);
+    rememberUser(null);
   }
 }

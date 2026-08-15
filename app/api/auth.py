@@ -1,13 +1,16 @@
 import datetime
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
-
+from fastapi import Response
+from app.Auth.VerifyJWT import get_current_user
 from app.config.settings import get_settings
 from app.db.connect import get_db
 from app.db.model.user import User
@@ -18,6 +21,8 @@ router = APIRouter(
 )
 
 _settings = get_settings()
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class GoogleCredential(BaseModel):
@@ -41,7 +46,7 @@ def create_tokens(response, user_id):
     access = jwt.encode(
         {
             "user_id": str(user_id),
-            "type": "access",
+            "token_type": "access",
             "exp": now + datetime.timedelta(
                 minutes=_settings.ACCESS_TOKEN_EXPIRE_MINUTES
             ),
@@ -53,7 +58,7 @@ def create_tokens(response, user_id):
     refresh = jwt.encode(
         {
             "user_id": str(user_id),
-            "type": "refresh",
+            "token_type": "refresh",
             "exp": now + datetime.timedelta(
                 days=_settings.REFRESH_TOKEN_EXPIRE_DAYS
             ),
@@ -83,8 +88,20 @@ def verify_google(credential):
             credential,
             google_requests.Request(),
             _settings.CLIENT_ID,
+            # Google signs the token on their clock and this checks it on ours.
+            # Without a little tolerance, a machine a second or two behind
+            # rejects a perfectly good credential as "used too early".
+            clock_skew_in_seconds=10,
         )
-    except ValueError:
+    except google_exceptions.TransportError as exc:
+        # Google's certificate endpoint was unreachable — the credential may be
+        # fine, so this is worth retrying rather than a sign-in failure.
+        logger.error("Could not reach Google to verify a credential: %s", exc)
+        raise HTTPException(503, "Could not reach Google. Please try again.")
+    except ValueError as exc:
+        # Expired, wrong audience, wrong signature — the reason never goes to
+        # the browser, but without it in the log a failed sign-in is unreadable.
+        logger.warning("Google credential rejected: %s", exc)
         raise HTTPException(401, "Invalid Google credential")
 
 
@@ -134,9 +151,28 @@ def google_login(
 
     return response
 
+@router.get("/me")
+def me(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user),
+):
+    user = db.get(User, user_id)
+
+    if not user:
+        raise HTTPException(401, "Not authenticated")
+
+    return {
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "picture": user.picture,
+        }
+    }
+
+
 @router.post("/logout")
-def logout():
-    response = JSONResponse({"message": "Logged out"})
+def logout(response: Response):
     for key in ("access_token", "refresh_token"):
         response.delete_cookie(key, path="/")
-    return response
+    return {"message": "Logged out"}
