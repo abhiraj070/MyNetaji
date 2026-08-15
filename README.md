@@ -109,7 +109,7 @@ Voting is intentionally frictionless: there is no login and no server-side ident
         │  NEXT_PUBLIC_API_URL
         ▼
    ┌───────────────────────────────────────────────┐
-   │  FastAPI  (app/main.py -> app/api/user.py)      │
+   │  FastAPI  (app/main.py -> app/api/*.py routers) │
    │  • reflected SQLAlchemy Core tables             │
    │  • PostGIS point-in-polygon for location        │
    │  • daily_reset background task (lifespan)       │
@@ -132,8 +132,9 @@ Voting is intentionally frictionless: there is no login and no server-side ident
 
 ### Backend
 
-- **`app/main.py`** creates the FastAPI app (`title="MyNetaji"`), configures CORS from the `CORS_ORIGINS` env var, and registers routes via a side-effect import of `app/api/user.py`. It owns a **lifespan** that starts `app/tasks/daily_reset.py`.
-- **`app/api/user.py`** holds every route. Tables are reflected **once at module import** (not per-request) — reflecting these against Neon costs ~20s, so hoisting it keeps request latency low. Location endpoints construct a PostGIS point and use `ST_Contains` against the GIST-indexed `geom` column.
+- **`app/main.py`** creates the FastAPI app (`title="MyNetaji"`), registers the error handlers and CORS (in that order — see gotchas), includes every router from `app/api/`, and owns a **lifespan** that starts `app/tasks/daily_reset.py`.
+- **`app/api/`** holds one `APIRouter` per domain — `mps.py`, `chief_ministers.py`, `ministers.py`, `highlights.py`, `politicians.py`, `performance.py`, `feeds.py`, `feedback.py` — each tagged so `/docs` groups them. Two shared modules sit underneath: `tables.py` reflects the externally-owned tables once for the whole process, and `localisation.py` holds the English/Hindi column helpers.
+- Tables are reflected **once at module import** (not per-request) — reflecting these against Neon costs ~20s, so hoisting it keeps request latency low. Location endpoints construct a PostGIS point and use `ST_Contains` against the GIST-indexed `geom` column.
 - **`app/tasks/daily_reset.py`** is an asyncio loop that, at every local midnight, zeroes the `*_today` counters. It uses a Postgres **advisory lock** (`pg_try_advisory_xact_lock`) so multiple workers don't double-reset, plus a `daily_counter_resets` bookkeeping row to catch up on a boundary missed while the service was down.
 - **`app/db/connect.py`** builds the engine from `DB_URL` and exposes a `get_db` session dependency.
 - **`app/config/settings.py`** loads `app/.env` via pydantic-settings (`DB_URL`, `BEARER_TOKEN_X`, `CORS_ORIGINS`).
@@ -204,8 +205,8 @@ Base URL: `http://localhost:8000` in development (frontend reads `NEXT_PUBLIC_AP
 ```
 SYL/                         # repository root (directory name unchanged)
 ├── app/                     # FastAPI backend
-│   ├── main.py              # app factory, CORS, lifespan, route registration
-│   ├── api/user.py          # all HTTP routes
+│   ├── main.py              # app factory, error handlers, CORS, lifespan, routers
+│   ├── api/                 # one APIRouter per domain + shared tables/localisation
 │   ├── db/connect.py        # engine + session
 │   ├── config/settings.py   # pydantic-settings (reads app/.env)
 │   ├── model/               # ORM base classes (declarative)
@@ -292,7 +293,7 @@ PYTHONPATH=app .venv/bin/python -m data_update.chief_minister_update
 ## Operational notes & gotchas
 
 - **Table reflection is module-scoped.** Never move `Table(..., autoload_with=engine)` inside a request handler — reflecting against Neon costs ~20s and would make every request time out. Schema changes require a server restart to be picked up.
-- **Register routes with `from app.api import user`** in `main.py`, *not* `import app.api.user` — the latter binds the root package name `app` into `main`'s globals and overwrites the `FastAPI()` instance.
+- **Error handlers are registered before `CORSMiddleware`, and the catch-all is a middleware, not `@app.exception_handler(Exception)`.** Starlette runs that handler in `ServerErrorMiddleware`, outside the CORS layer, so its 500 goes out with no `Access-Control-Allow-Origin` and the browser reports a CORS failure instead of the server's message. `add_middleware` inserts at the front of the stack, so CORS must be added *last* to end up outermost.
 - **Location endpoints are POST**, not GET: browsers strip the body from GET (XHR spec), which made the location lookup uncallable from the web client.
 - **Ministry voting must send the row's full original `ministry` string** — the update handler matches it exactly, and one row can hold several semicolon-joined portfolios.
 - **Photos use `referrerPolicy="no-referrer"`** because `myneta.info` and `sansad.in` hotlink-block on Referer.

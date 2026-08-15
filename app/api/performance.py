@@ -1,23 +1,29 @@
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import MetaData, Table, and_, func, select
 from sqlalchemy.orm import Session
 
+from app.api.tables import mp
 from app.db.connect import engine, get_db
-from app.main import app
 from app.schema import GetMpPerformanceListRequest, GetMpPerformanceRequest
 
+router = APIRouter(tags=["MP Performance"])
 metadata = MetaData()
-mp = Table("mps", metadata, autoload_with=engine)
-mp_wealth = Table("mp_wealth_declaration", metadata, autoload_with=engine)
-mplads_funds = Table("mp_mplads_funds", metadata, autoload_with=engine)
-mplads_works = Table("mp_mplads_works", metadata, autoload_with=engine)
-parl_performance = Table("mp_parliamentary_performance", metadata, autoload_with=engine)
-parl_sessions = Table("mp_parliamentary_sessions", metadata, autoload_with=engine)
-parl_questions = Table("mp_parliamentary_questions", metadata, autoload_with=engine)
-parl_debates = Table("mp_parliamentary_debates", metadata, autoload_with=engine)
-parl_committees = Table("mp_parliamentary_committees", metadata, autoload_with=engine)
-promises = Table("mp_promises", metadata, autoload_with=engine)
-benchmarks = Table("mp_performance_benchmarks", metadata, autoload_with=engine)
+
+
+def _reflect(name):
+    return Table(name, metadata, autoload_with=engine)
+
+
+mp_wealth = _reflect("mp_wealth_declaration")
+mplads_funds = _reflect("mp_mplads_funds")
+mplads_works = _reflect("mp_mplads_works")
+parl_performance = _reflect("mp_parliamentary_performance")
+parl_sessions = _reflect("mp_parliamentary_sessions")
+parl_questions = _reflect("mp_parliamentary_questions")
+parl_debates = _reflect("mp_parliamentary_debates")
+parl_committees = _reflect("mp_parliamentary_committees")
+promises = _reflect("mp_promises")
+benchmarks = _reflect("mp_performance_benchmarks")
 
 MAX_PAGE_SIZE = 100
 DEFAULT_PAGE_SIZE = 20
@@ -372,7 +378,7 @@ def transparency_section(db, mp_id):
     }
 
 
-@app.post("/get-mp-performance")
+@router.post("/get-mp-performance")
 def get_mp_performance(request: GetMpPerformanceRequest, db: Session = Depends(get_db)):
     person = _row(db, select(mp.c.id, mp.c.name, mp.c.state, mp.c.state_key,
                              mp.c.constituency, mp.c.party)
@@ -393,7 +399,7 @@ def get_mp_performance(request: GetMpPerformanceRequest, db: Session = Depends(g
     }}
 
 
-@app.post("/get-mp-performance-works")
+@router.post("/get-mp-performance-works")
 def get_mp_performance_works(request: GetMpPerformanceListRequest,
                              db: Session = Depends(get_db)):
     page, size, _ = paging(request)
@@ -401,7 +407,7 @@ def get_mp_performance_works(request: GetMpPerformanceListRequest,
                                 status=request.status)}
 
 
-@app.post("/get-mp-performance-questions")
+@router.post("/get-mp-performance-questions")
 def get_mp_performance_questions(request: GetMpPerformanceListRequest,
                                  db: Session = Depends(get_db)):
     page, size, _ = paging(request)
@@ -409,7 +415,7 @@ def get_mp_performance_questions(request: GetMpPerformanceListRequest,
                                         question_type=request.question_type)}
 
 
-@app.post("/get-mp-performance-debates")
+@router.post("/get-mp-performance-debates")
 def get_mp_performance_debates(request: GetMpPerformanceListRequest,
                                db: Session = Depends(get_db)):
     page, size, _ = paging(request)

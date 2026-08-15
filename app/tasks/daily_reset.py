@@ -43,11 +43,6 @@ _RESET_STATEMENTS = (
 
 
 def _zone():
-    """
-    The day boundary is a local one — "today" on a civic app for India means
-    the Indian calendar day, not UTC. Falls back to UTC if the host has no tz
-    database (slim containers often don't ship one).
-    """
     name = os.getenv("RESET_TIMEZONE", "Asia/Kolkata")
     try:
         return ZoneInfo(name)
@@ -57,7 +52,6 @@ def _zone():
 
 
 def seconds_until_next_midnight(now=None):
-    """Seconds from `now` to the next local midnight (never zero or negative)."""
     zone = _zone()
     now = now or datetime.now(zone)
     tomorrow = (now + timedelta(days=1)).date()
@@ -66,20 +60,10 @@ def seconds_until_next_midnight(now=None):
 
 
 def run_daily_reset():
-    """
-    Clear both tables' daily counters if today's boundary hasn't been handled.
-
-    Synchronous on purpose: the project's engine is the sync one, so the async
-    caller hands this to a worker thread rather than blocking the event loop.
-    Returns a short status string for the logs.
-    """
     today = datetime.now(_zone()).date()
 
     with engine.begin() as conn:
         conn.execute(_BOOKKEEPING_DDL)
-
-        # Transaction-scoped: released automatically on commit, rollback, or a
-        # dropped connection. Whoever loses the race simply does nothing.
         if not conn.execute(
             text("SELECT pg_try_advisory_xact_lock(:key)"), {"key": _LOCK_KEY}
         ).scalar():
@@ -115,16 +99,12 @@ async def _reset_loop():
         except asyncio.CancelledError:
             raise
         except Exception:
-            # A failed run must not kill the loop — the next boundary (or the
-            # next restart) gets another go, and the bookkeeping row means a
-            # skipped day is caught up rather than silently lost.
             logger.exception("Daily counter reset failed; retrying at the next boundary.")
 
         await asyncio.sleep(seconds_until_next_midnight())
 
 
 def start(app):
-    """Attach the loop to the app's lifespan. Call once, from the lifespan."""
     app.state.daily_reset_task = asyncio.create_task(_reset_loop())
 
 
