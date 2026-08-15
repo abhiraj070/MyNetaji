@@ -7,15 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import { useEffect } from "react";
-
-import {
-  SESSION_ENDED_EVENT,
-  authErrorCode,
-  fetchSession,
-  googleSignIn,
-  logoutSession,
-} from "@/lib/api";
+import { authErrorCode, fetchSession, googleSignIn, logoutSession } from "@/lib/api";
 
 export const SESSION_KEY = ["session"];
 const GOOGLE_LOGIN_KEY = ["google-login"];
@@ -33,22 +25,12 @@ const GOOGLE_LOGIN_KEY = ["google-login"];
  * network is down would just fail a second time.
  */
 export function useSession() {
-  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: SESSION_KEY,
     queryFn: fetchSession,
     staleTime: 5 * 60_000,
     retry: false,
   });
-
-  // The cookies can end without the app doing anything: they expire. `api`
-  // notices the first 401, forgets the user and says so here — which is what
-  // moves every screen reading this hook to signed out at the same moment.
-  useEffect(() => {
-    const onEnded = () => queryClient.setQueryData(SESSION_KEY, null);
-    window.addEventListener(SESSION_ENDED_EVENT, onEnded);
-    return () => window.removeEventListener(SESSION_ENDED_EVENT, onEnded);
-  }, [queryClient]);
 
   return {
     user: query.data ?? null,
