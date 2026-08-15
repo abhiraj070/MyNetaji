@@ -59,12 +59,19 @@ export function GoogleButton({
   className = "",
 }) {
   const { t, language } = useTranslation();
-  const { frameRef, containerRef, isReady, isUnavailable, retry, gisSize } =
-    useGoogleIdentity(onCredential, language);
+  const {
+    frameRef,
+    containerRef,
+    isReady,
+    isUnavailable,
+    unavailableReason,
+    retry,
+    gisSize,
+  } = useGoogleIdentity(onCredential, language);
 
   useEffect(() => {
-    onUnavailable?.(isUnavailable);
-  }, [isUnavailable, onUnavailable]);
+    onUnavailable?.(unavailableReason);
+  }, [unavailableReason, onUnavailable]);
 
   // The overlay stops taking clicks while the credential is being exchanged,
   // so a second press cannot open a second popup mid-sign-in.

@@ -32,20 +32,21 @@ const ERROR_COPY = {
   server_error: "auth.serverError",
   unreachable: "auth.unreachable",
   gis_unavailable: "auth.googleUnavailable",
+  gis_misconfigured: "auth.googleNotConfigured",
 };
 
 export function ContinueWithGoogle({ className = "" }) {
   const { t } = useTranslation();
   const { signIn, isPending, errorCode } = useGoogleLogin();
-  const [isGisUnavailable, setIsGisUnavailable] = useState(false);
+  const [gisReason, setGisReason] = useState(null);
 
   // Stable identity: `GoogleButton` reports availability from an effect, and a
   // new function every render would loop it.
-  const handleUnavailable = useCallback((unavailable) => {
-    setIsGisUnavailable(unavailable);
+  const handleUnavailable = useCallback((reason) => {
+    setGisReason(reason);
   }, []);
 
-  const code = isGisUnavailable ? "gis_unavailable" : errorCode;
+  const code = gisReason ?? errorCode;
   const message = code ? t(ERROR_COPY[code] ?? "auth.exchangeFailed") : null;
 
   return (

@@ -409,6 +409,7 @@
     "noProfile": "Google didn't share an email for that account, so we can't sign you in.",
     "googleUnreachable": "We couldn't reach Google to check that sign-in. Please try again.",
     "googleUnavailable": "We couldn't load Google sign-in. Check your connection or any ad blocker, then tap the button to retry.",
+    "googleNotConfigured": "Google sign-in isn't set up for this site yet. Please try again later.",
     "serverError": "Something went wrong on our side. Please try again in a moment.",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "unreachable": "We couldn't reach the server. Check your connection and try again.",

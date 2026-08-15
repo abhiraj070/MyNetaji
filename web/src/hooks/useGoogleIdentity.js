@@ -28,8 +28,14 @@ export function useGoogleIdentity(onCredential, locale) {
   const frameRef = useRef(null);
   const containerRef = useRef(null);
   // A build with no client ID can never get to "ready", so it starts settled
-  // rather than showing a spinner-shaped promise it cannot keep.
-  const [status, setStatus] = useState(() => (GOOGLE_CLIENT_ID ? "loading" : "unavailable"));
+  // rather than showing a spinner-shaped promise it cannot keep. It is a
+  // separate state from "the script would not load": one is the deployment
+  // missing a variable, the other is the reader's network — and telling a
+  // reader to check their ad blocker when the site was built without a client
+  // ID sends them looking for a fault that is not theirs.
+  const [status, setStatus] = useState(() =>
+    GOOGLE_CLIENT_ID ? "loading" : "misconfigured",
+  );
   const [attempt, setAttempt] = useState(0);
 
   // Claim the credential callback while mounted. GIS has exactly one, so with
@@ -50,7 +56,11 @@ export function useGoogleIdentity(onCredential, locale) {
     if (!GOOGLE_CLIENT_ID) {
       // Nothing to load, and nothing the reader can do about it — but whoever
       // deployed it should not have to guess why the button is inert.
-      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set — Google sign-in is disabled.");
+      console.error(
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set, so Google sign-in is disabled. " +
+          "It is inlined at build time: set it in the build environment and rebuild — " +
+          "setting it only at runtime will not reach the browser bundle.",
+      );
       return;
     }
 
@@ -123,7 +133,14 @@ export function useGoogleIdentity(onCredential, locale) {
     containerRef,
     /** The overlay is live and clicks will reach Google. */
     isReady: status === "ready",
-    isUnavailable: status === "unavailable",
+    isUnavailable: status === "unavailable" || status === "misconfigured",
+    /** Why sign-in is unavailable, for the screen to phrase it honestly. */
+    unavailableReason:
+      status === "misconfigured"
+        ? "gis_misconfigured"
+        : status === "unavailable"
+          ? "gis_unavailable"
+          : null,
     retry,
     gisSize: { width: GIS_WIDTH, height: GIS_HEIGHT },
   };
