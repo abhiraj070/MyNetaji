@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { ANGRY_GLYPH, nameUsesAngryVerdict } from "@/lib/angryVerdict";
 import { getLeaderboardTop } from "@/lib/og-data";
 
 import {
@@ -179,7 +180,10 @@ export async function GET(request) {
                   color: board === "rose" ? BRAND.green : BRAND.coral,
                 }}
               >
-                {boardEmoji} {Number(row[countKey] ?? 0).toLocaleString("en-IN")}
+                {board === "slap" && nameUsesAngryVerdict(row.name ?? row.minister_name)
+                  ? ANGRY_GLYPH
+                  : boardEmoji}{" "}
+                {Number(row[countKey] ?? 0).toLocaleString("en-IN")}
               </div>
             </div>
           ))}

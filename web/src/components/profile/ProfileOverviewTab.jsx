@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronRight, Gavel, Scale, Sparkles, Wallet } from "lucide-react";
+import { ChevronRight, Gavel, GraduationCap, Scale, Sparkles, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { DataFreshnessBlock } from "@/components/DataFreshness";
 import { atAGlanceMetrics, quickInsights } from "@/lib/profile";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_POP } from "@/lib/motion";
@@ -12,6 +13,7 @@ const METRIC_ICON = {
   verdict: Scale,
   cases: Gavel,
   assets: Wallet,
+  education: GraduationCap,
 };
 
 /**
@@ -80,6 +82,12 @@ export function ProfileOverviewTab({ subject, onOpenAssets }) {
           </ul>
         </section>
       )}
+
+      {/* Where the figures above came from, and when they were last pulled.
+          Last in the tab on purpose: a reader who has scrolled this far is
+          asking about provenance, and leading with it would crowd the
+          at-a-glance cards this tab exists for. */}
+      <DataFreshnessBlock tier={subject.tier} />
     </div>
   );
 }

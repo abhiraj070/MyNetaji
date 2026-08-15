@@ -48,7 +48,7 @@ export function RepresentativeCard({ subject, keySeed, onFirstVote }) {
   const buttonsRef = useRef({});
 
   const { choice, slaps, roses, vote, isError } = useVote(subject.tier, subject);
-  const choreo = useVoteChoreography({ stageRef, portraitRef, buttonsRef });
+  const choreo = useVoteChoreography({ stageRef, portraitRef, buttonsRef, subject });
 
   const role = ROLE_LABEL[subject.tier]?.(subject, t);
 
@@ -165,6 +165,7 @@ export function RepresentativeCard({ subject, keySeed, onFirstVote }) {
         className="mx-auto w-full max-w-md shrink-0"
       >
         <VoteButtons
+          subject={subject}
           choice={choice}
           slapCount={slaps}
           roseCount={roses}
@@ -188,7 +189,7 @@ export function RepresentativeCard({ subject, keySeed, onFirstVote }) {
         />
       </motion.section>
 
-      <VoteFlight flight={choreo.flight} />
+      <VoteFlight flight={choreo.flight} subject={subject} />
       <VoteAnnouncement message={choreo.message} />
     </div>
   );

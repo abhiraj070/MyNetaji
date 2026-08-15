@@ -14,6 +14,7 @@ from app.db.model import localisation  # noqa: F401
 from app.db.model import mp_journey  # noqa: F401
 from app.db.model import mp_performance  # noqa: F401
 from app.db.model import mp_wealth  # noqa: F401
+from app.db.model import user  # noqa: F401
 
 # Alembic Config object — access to values in alembic.ini.
 config = context.config

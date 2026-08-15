@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 
 import { EmptyNote, SectionHeading, SourceLine } from "./PerformanceParts";
 import { useTranslation } from "@/lib/i18n";
-import { formatCount, formatInr } from "@/lib/performance";
+import { formatInr } from "@/lib/performance";
 
 /**
  * Transparency: the affidavit facts, read from where they already live.
@@ -27,11 +27,13 @@ export function PerformanceTransparency({ transparency, onOpenAssets }) {
     );
   }
 
+  // Education moved to the profile Overview, where the rest of the
+  // who-this-person-is facts live; criminal cases are shown there too, so
+  // repeating either here was the same fact twice on one screen. What stays is
+  // the money — the part the Performance sections are actually about.
   const rows = [
     [t("profile.declaredAssets"), formatInr(transparency.declaredAssets)],
     [t("performance.declaredLiabilities"), formatInr(transparency.declaredLiabilities)],
-    [t("profile.criminalCases"), formatCount(transparency.criminalCases)],
-    [t("performance.education"), transparency.education],
     [
       t("performance.affidavit"),
       transparency.electionName ??

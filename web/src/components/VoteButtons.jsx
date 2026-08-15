@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { SPRING_POP, SPRING_PRESS } from "@/lib/motion";
 import { useTranslation } from "@/lib/i18n";
+import { ANGRY_GLYPH, usesAngryVerdict } from "@/lib/angryVerdict";
 
 /**
  * The two verdict controls — the loudest thing on the page after the
@@ -27,12 +28,16 @@ import { useTranslation } from "@/lib/i18n";
  * verdict is one-directional. You can keep tapping the side you chose; the lock
  * is per-representative and clears when the card is swapped for another subject
  * (`RepresentativeCard` remounts, resetting `choice`).
+ *
+ * A few politicians show the negative disc as an angry face rather than a slap
+ * (see `lib/angryVerdict`). Only the glyph and the word change — the disc is
+ * the same control, sending the same `slap` choice to the same column.
  */
 const OPTIONS = [
   {
     choice: "slap",
     emoji: "👋",
-    label: "Slap",
+    labelKey: "vote.slap",
     face: "bg-[linear-gradient(160deg,#ff7a5c_0%,#ff4e3a_58%,#ef3320_100%)]",
     edge: "#c22b19",
     auraRgb: "255 78 58",
@@ -40,7 +45,7 @@ const OPTIONS = [
   {
     choice: "rose",
     emoji: "🌹",
-    label: "Rose",
+    labelKey: "vote.rose",
     face: "bg-[linear-gradient(160deg,#34d99b_0%,#12b981_58%,#0a9c69_100%)]",
     edge: "#0a7d55",
     auraRgb: "18 185 129",
@@ -51,6 +56,7 @@ const EDGE_REST = 8;
 const EDGE_PRESSED = 3;
 
 export function VoteButtons({
+  subject,
   choice,
   slapCount = 0,
   roseCount = 0,
@@ -60,14 +66,25 @@ export function VoteButtons({
 }) {
   const { t } = useTranslation();
   const counts = { slap: slapCount, rose: roseCount };
+  const isAngry = usesAngryVerdict(subject);
+
+  // Resolved here rather than inside `VoteButton` so the disc stays a dumb
+  // renderer and there is exactly one place that decides what the negative
+  // side is called.
+  const options = OPTIONS.map((option) =>
+    option.choice === "slap" && isAngry
+      ? { ...option, emoji: ANGRY_GLYPH, labelKey: "vote.angry" }
+      : option,
+  );
 
   return (
     <div>
       <div className="flex items-start justify-center gap-8 sm:gap-12">
-        {OPTIONS.map((option) => (
+        {options.map((option) => (
           <VoteButton
             key={option.choice}
             option={option}
+            label={t(option.labelKey)}
             count={counts[option.choice]}
             isPicked={choice === option.choice}
             /* A side has been chosen and it isn't this one → lock this disc. */
@@ -98,7 +115,7 @@ export function VoteButtons({
  * to the button rather than lifted to `VoteButtons` since neither side needs
  * to know about the other's ripples.
  */
-function VoteButton({ option, count, isPicked, disabled, onVote, buttonsRef }) {
+function VoteButton({ option, label, count, isPicked, disabled, onVote, buttonsRef }) {
   const [ripples, setRipples] = useState([]);
 
   const handleClick = () => {
@@ -128,7 +145,7 @@ function VoteButton({ option, count, isPicked, disabled, onVote, buttonsRef }) {
         onClick={handleClick}
         disabled={disabled}
         aria-pressed={isPicked}
-        aria-label={`${option.label} this representative`}
+        aria-label={`${label} this representative`}
         initial={false}
         /* Dimming (opacity/grayscale) lives on the className below rather than
            here: framer holds an inline `opacity` that would override a Tailwind

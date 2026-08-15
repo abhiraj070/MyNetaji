@@ -9,6 +9,7 @@ import { RepresentativeCard } from "@/components/RepresentativeCard";
 import { GamePageSkeleton } from "@/components/skeletons/GamePageSkeleton";
 import { TodaysHighlight } from "@/components/TodaysHighlight";
 import { useTopperSelection } from "@/hooks/useTopperSelection";
+import { usesAngryVerdict } from "@/lib/angryVerdict";
 import { useTranslation } from "@/lib/i18n";
 import { useLocationState } from "@/lib/location";
 import { rise, SPRING_POP } from "@/lib/motion";
@@ -55,9 +56,13 @@ export function GameScreen() {
   const handleVoteCast = useCallback(
     (next) => {
       setLastVote({ key, choice: next });
-      showToast(next === "slap" ? t("vote.slapRecorded") : t("vote.roseRecorded"));
+      // The negative toast follows whichever disc the reader actually saw.
+      const negative = usesAngryVerdict(subject)
+        ? "vote.angryRecorded"
+        : "vote.slapRecorded";
+      showToast(t(next === "slap" ? negative : "vote.roseRecorded"));
     },
-    [key, setLastVote, showToast, t],
+    [key, subject, setLastVote, showToast, t],
   );
 
   const handleShare = useCallback(async () => {

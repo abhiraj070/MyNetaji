@@ -3,8 +3,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 
 import { FLIGHT_MS } from "@/hooks/useVoteChoreography";
+import { ANGRY_GLYPH, SLAP_GLYPH, usesAngryVerdict } from "@/lib/angryVerdict";
 
-const GLYPH = { slap: "👋", rose: "🌹" };
+const GLYPH = { slap: SLAP_GLYPH, rose: "🌹" };
 
 /**
  * The projectile: it leaves the button that was pressed and arcs to the face.
@@ -24,7 +25,7 @@ const TRAIL = [
   { delay: 0, opacity: 1, blur: "" },
 ];
 
-export function VoteFlight({ flight }) {
+export function VoteFlight({ flight, subject }) {
   return (
     <AnimatePresence>
       {flight && (
@@ -34,7 +35,16 @@ export function VoteFlight({ flight }) {
           className="pointer-events-none absolute inset-0 z-20 overflow-visible"
         >
           {TRAIL.map((ghost) => (
-            <Projectile key={ghost.delay} flight={flight} ghost={ghost} />
+            <Projectile
+              key={ghost.delay}
+              flight={flight}
+              ghost={ghost}
+              glyph={
+                flight.choice === "slap" && usesAngryVerdict(subject)
+                  ? ANGRY_GLYPH
+                  : GLYPH[flight.choice]
+              }
+            />
           ))}
         </div>
       )}
@@ -42,7 +52,7 @@ export function VoteFlight({ flight }) {
   );
 }
 
-function Projectile({ flight, ghost }) {
+function Projectile({ flight, ghost, glyph }) {
   const dx = flight.to.x - flight.from.x;
   const dy = flight.to.y - flight.from.y;
   const isSlap = flight.choice === "slap";
@@ -82,7 +92,7 @@ function Projectile({ flight, ghost }) {
       }}
       className={`absolute -mt-4 -ml-4 text-3xl leading-none select-none ${ghost.blur}`}
     >
-      {GLYPH[flight.choice]}
+      {glyph}
     </motion.span>
   );
 }

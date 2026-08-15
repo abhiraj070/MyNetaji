@@ -1,3 +1,4 @@
+import { usesAngryVerdict, verdictGlyph } from "./angryVerdict";
 import { manifestoPoints } from "./manifesto";
 
 /**
@@ -48,7 +49,7 @@ export function atAGlanceMetrics(subject, t) {
     {
       key: "verdict",
       label: t("profile.publicVerdict"),
-      value: `${Number(subject.slap_count ?? 0).toLocaleString("en-IN")} 👋 · ${Number(subject.rose_count ?? 0).toLocaleString("en-IN")} 🌹`,
+      value: `${Number(subject.slap_count ?? 0).toLocaleString("en-IN")} ${verdictGlyph(subject)} · ${Number(subject.rose_count ?? 0).toLocaleString("en-IN")} 🌹`,
       slap: Number(subject.slap_count ?? 0),
       rose: Number(subject.rose_count ?? 0),
     },
@@ -66,6 +67,23 @@ export function atAGlanceMetrics(subject, t) {
       value: t("profile.tapToView"),
       tappable: true,
     },
+    /*
+     * Declared education, for the tiers that have it.
+     *
+     * Only `mps` carries this column, so the card is dropped entirely rather
+     * than shown as pending for a Chief Minister or a Union Minister: for them
+     * it is not a figure on its way, it is simply not part of that dataset,
+     * and a "coming soon" would promise something nobody is fetching.
+     */
+    ...(subject.education
+      ? [
+          {
+            key: "education",
+            label: t("profile.education"),
+            value: subject.education,
+          },
+        ]
+      : []),
   ];
 }
 
@@ -115,12 +133,19 @@ export function quickInsights(subject, t) {
   const roses = Number(subject.rose_count ?? 0);
 
   if (slaps > 0 || roses > 0) {
+    // The wording follows the glyph: a politician shown an angry face is
+    // described as collecting angry reactions, not slaps.
+    const angry = usesAngryVerdict(subject);
     if (roses > slaps) {
-      insights.push(t("profile.insightMoreRoses"));
+      insights.push(
+        t(angry ? "profile.insightMoreRosesAngry" : "profile.insightMoreRoses"),
+      );
     } else if (slaps > roses) {
-      insights.push(t("profile.insightMoreSlaps"));
+      insights.push(
+        t(angry ? "profile.insightMoreAngry" : "profile.insightMoreSlaps"),
+      );
     } else {
-      insights.push(t("profile.insightEven"));
+      insights.push(t(angry ? "profile.insightEvenAngry" : "profile.insightEven"));
     }
   }
 

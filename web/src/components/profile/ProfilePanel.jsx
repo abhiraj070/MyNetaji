@@ -28,13 +28,15 @@ import { subjectKeyOf } from "@/lib/subject";
 // tabs without remounting anything.
 const TABS = [
   { value: "overview", key: "profile.overview" },
-  { value: "manifestos", key: "profile.manifestos" },
-  { value: "journey", key: "profile.journey" },
-  // Open for MPs, still locked for everyone else. Performance is built on the
-  // MPLADS scheme and Lok Sabha activity, both of which exist per MP and have
-  // no counterpart for a Chief Minister or a Union Minister — so the preview
-  // sheet remains the honest answer for them rather than an empty dashboard.
+  // Performance sits second: it is the substantive record, and burying it
+  // behind the party manifesto made the least personal tab the most prominent.
+  // Still locked for anyone who is not an MP: Performance is built on MPLADS
+  // and Lok Sabha activity, neither of which has a counterpart for a Chief
+  // Minister or a Union Minister, so the preview sheet is the honest answer
+  // for them rather than an empty dashboard.
   { value: "performance", key: "profile.performance" },
+  { value: "journey", key: "profile.journey" },
+  { value: "manifestos", key: "profile.manifestos" },
 ];
 
 export function ProfilePanel({

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import { Badge, BADGES } from "./ui/Badge";
 import { useHighlights } from "@/hooks/useHighlights";
+import { ANGRY_GLYPH, usesAngryVerdict } from "@/lib/angryVerdict";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_POP, SPRING_PRESS } from "@/lib/motion";
 
@@ -72,6 +73,12 @@ export function TodaysHighlight({ onSelectSubject, pendingKey }) {
           const slot = slots?.[item.slot];
           const row = slot?.data ?? null;
           const name = displayName(row);
+          // The "most slapped" tile shows an angry face — and says so — when
+          // today's leader happens to be one of the politicians
+          // `lib/angryVerdict` covers. The tally itself is unchanged.
+          const angry = item.slot === "slapped" && usesAngryVerdict(row);
+          const emoji = angry ? ANGRY_GLYPH : item.emoji;
+          const labelKey = angry ? "highlight.mostAngry" : item.labelKey;
           // Same key format the leaderboard uses, so the two share one
           // in-flight marker and can't both fetch at once.
           const isOpening = Boolean(name) && pendingKey === `${row.tier}:${name}`;
@@ -89,18 +96,14 @@ export function TodaysHighlight({ onSelectSubject, pendingKey }) {
                 transition={SPRING_POP}
                 className={`flex size-9 items-center justify-center rounded-full text-base leading-none shadow-sm ring-1 ring-inset ${TILE_ICON_TONE[item.tone]}`}
               >
-                {item.emoji}
+                {emoji}
               </motion.span>
 
               <p className="font-display text-[11px] leading-tight font-semibold text-ink">
-                {t(item.labelKey)}
+                {t(labelKey)}
               </p>
 
-              <TileValue
-                isPending={isPending}
-                slot={slot}
-                emoji={item.emoji}
-              />
+              <TileValue isPending={isPending} slot={slot} emoji={emoji} />
             </>
           );
 

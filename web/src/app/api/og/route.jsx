@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { nameUsesAngryVerdict } from "@/lib/angryVerdict";
 import { getCmByState, getMinisterByName, ministerPortfolio } from "@/lib/og-data";
 
 import {
@@ -193,7 +194,9 @@ export async function GET(request) {
               boxShadow: "0 14px 34px rgba(255,138,30,0.38), inset 0 1px 0 rgba(255,255,255,0.45)",
             }}
           >
-            🌹 Rose or 👋 Slap? You decide.
+            {nameUsesAngryVerdict(name)
+              ? "🌹 Rose or 😠 Angry? You decide."
+              : "🌹 Rose or 👋 Slap? You decide."}
           </div>
         </div>
 

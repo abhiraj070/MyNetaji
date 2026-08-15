@@ -5,6 +5,7 @@ import { Loader2, Lock } from "lucide-react";
 import { useId, useState } from "react";
 
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { verdictGlyph } from "@/lib/angryVerdict";
 import { SPRING_POP } from "@/lib/motion";
 import { leaderboardShareUrl } from "@/lib/share";
 import { toFriendlyError } from "@/lib/api";
@@ -291,7 +292,9 @@ function TopperList({ toppers, tier, board, highlightName, onSelectTopper, pendi
                 <div className="flex shrink-0 items-center gap-3">
                   <Metric
                     value={topper.slap_count ?? 0}
-                    emoji="👋"
+                    /* Same column, same sort — only the glyph differs for the
+                       politicians `lib/angryVerdict` covers. */
+                    emoji={verdictGlyph(topper)}
                     emphasize={board === "slap"}
                     accentClass="text-slap"
                   />

@@ -101,11 +101,16 @@
     "homeTierAria": "Which of your representatives to show"
   },
   "vote": {
+    "slap": "Slap",
+    "rose": "Rose",
     "slapRecorded": "👋 Another slap recorded.",
     "roseRecorded": "🌹 One more rose added.",
     "noVerdicts": "No verdicts yet — be the first.",
     "yourVerdict": "Your verdict",
-    "saveFailed": "That didn't save. Try again."
+    "saveFailed": "That didn't save. Try again.",
+    "angry": "Angry",
+    "angryAria": "Angry at {{name}}",
+    "angryRecorded": "😠 Another angry reaction recorded."
   },
   "game": {
     "title": "Slap or Rose",
@@ -119,7 +124,8 @@
     "mostLoved": "Most Loved",
     "mostJudged": "Most Judged",
     "empty": "No verdicts yet",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "mostAngry": "Most Angry"
   },
   "leaderboard": {
     "shareTitle": "MyNetaji Leaderboard",
@@ -159,7 +165,11 @@
     "expand": "Expand",
     "assetsChipAria": "Declared assets {{amount}} — view breakdown",
     "insightMp": "Currently the Member of Parliament for {{place}}.",
-    "mpCommitments": "MP's commitments"
+    "mpCommitments": "MP's commitments",
+    "insightMoreRosesAngry": "Getting more 🌹 roses than 😠 angry reactions from voters right now.",
+    "insightMoreAngry": "Getting more 😠 angry reactions than 🌹 roses from voters right now.",
+    "insightEvenAngry": "Angry reactions and roses are running dead even right now.",
+    "education": "Education"
   },
   "assets": {
     "title": "Declared Assets",
@@ -374,5 +384,37 @@
     "footnote": "Figures come from the sources named beside each metric and are refreshed as those sources publish. Blank means the source doesn't publish it — never that the value is zero. MyNetaji does not rate or rank politicians.",
     "mpladsNote": "MPLADS is a constituency development budget. Funds are released to the district authority and spent on works the MP recommends; none of it is money received by the MP.",
     "affidavitNote": "Declared in the candidate's election affidavit. Assets and liabilities are as declared at the time of that election, not a current valuation."
+  },
+  "data": {
+    "updated": "Data updated",
+    "source": "Data source",
+    "lastUpdated": "Last updated",
+    "note": "Declared figures come from {{source}}, refreshed when that source publishes."
+  },
+  "auth": {
+    "continueWithGoogle": "Continue with Google",
+    "redirecting": "Taking you to Google…",
+    "welcome": "Know who represents you.",
+    "blurb": "Sign in to find your MP, MLA and Chief Minister — their record, their promises, and your verdict.",
+    "privacy": "We only use your Google account to sign you in.",
+    "signingIn": "Signing you in…",
+    "failedTitle": "That sign-in didn't go through",
+    "cancelled": "You cancelled the Google sign-in. No harm done — try again when you're ready.",
+    "exchangeFailed": "We couldn't complete sign-in with Google. Please try again.",
+    "stateMismatch": "That sign-in link expired. Please start again.",
+    "noProfile": "Google didn't share an email for that account, so we can't sign you in.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "unreachable": "We couldn't reach the server. Check your connection and try again.",
+    "retry": "Try again",
+    "locationTitle": "Find your representatives",
+    "locationBody": "We need your location to find your MLA, MP and CM.",
+    "allowLocation": "Allow Location",
+    "locating": "Finding you…",
+    "locationDenied": "Location permission was denied. Allow it in your browser settings, then try again.",
+    "locationUnsupported": "This browser can't share your location. Try Chrome, Safari or Firefox.",
+    "locationFailed": "We couldn't read your location. Please try again.",
+    "locationApiFailed": "We couldn't look up your representatives just now. Please try again.",
+    "noRepresentative": "We couldn't find a representative for that location. It may be outside the constituencies we cover yet.",
+    "locationPrivacy": "Used once to find your constituency. We don't store it."
   }
 }

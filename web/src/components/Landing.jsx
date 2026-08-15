@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { PaintedTricolour } from "./landing/PaintedTricolour";
-import { Button } from "./ui/Button";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { XLogo } from "./x/XLogo";
 import { SPRING_ENTRANCE } from "@/lib/motion";
 
@@ -96,11 +96,12 @@ const PREVIEW_TIMELINE = [
   { year: "2014", label: "Minister of State" },
 ];
 
-export function Landing({ onAllowLocation, isBusy }) {
+export function Landing({ onContinueWithGoogle }) {
+  // Sign-in is the entry now: the reader authenticates first, and location is
+  // asked for on the far side of that. The button says exactly what pressing
+  // it does — the old "Find Your CM & MP" promised the step after this one.
   const cta = (
-    <Button onClick={onAllowLocation} disabled={isBusy} className="w-full sm:w-auto">
-      {isBusy ? "Finding you…" : "Find Your CM & MP →"}
-    </Button>
+    <GoogleButton onClick={onContinueWithGoogle} className="sm:w-auto" />
   );
 
   return (
@@ -140,7 +141,7 @@ export function Landing({ onAllowLocation, isBusy }) {
           >
             {cta}
             <p className="text-xs font-medium text-faint sm:text-sm">
-              Start with the politicians representing your area.
+              Then we&rsquo;ll find the politicians representing your area.
             </p>
           </motion.div>
         </div>

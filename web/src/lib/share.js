@@ -8,6 +8,8 @@
  * `?share=leaderboard&tier=` is what the homepage's `generateMetadata` reads to
  * serve the live top-3 preview card for a shared leaderboard link.
  */
+import { usesAngryVerdict } from "./angryVerdict";
+
 export function leaderboardShareUrl(tier = "cm") {
   if (typeof window === "undefined") return "";
   const t = tier === "minister" ? "minister" : "cm";
@@ -24,13 +26,22 @@ export function leaderboardShareUrl(tier = "cm") {
  * neither route can own the wording.
  */
 export function buildShareMessage(subject, currentChoice) {
+  // A few politicians carry an angry face in place of the slap everywhere in
+  // the app (`lib/angryVerdict`); the shared sentence follows, so what a
+  // reader posts matches the button they actually pressed.
+  const angry = usesAngryVerdict(subject);
+
   if (currentChoice === "slap") {
-    return `I slapped ${subject.name}. 👋 Now it's your turn.`;
+    return angry
+      ? `I'm angry at ${subject.name}. 😠 Now it's your turn.`
+      : `I slapped ${subject.name}. 👋 Now it's your turn.`;
   }
   if (currentChoice === "rose") {
     return `I gave ${subject.name} a 🌹. What's your verdict?`;
   }
-  return `Slap or Rose ${subject.name}? Decide for yourself.`;
+  return angry
+    ? `Angry or Rose ${subject.name}? Decide for yourself.`
+    : `Slap or Rose ${subject.name}? Decide for yourself.`;
 }
 
 /**

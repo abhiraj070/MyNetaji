@@ -4,6 +4,13 @@ export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
   timeout: 15_000,
   headers: { "Content-Type": "application/json" },
+  // The session is a pair of httpOnly cookies set by `/auth/google/callback`.
+  // The API is a different origin from the app (different port in dev, a
+  // different host in production), so without this the browser sends the
+  // request but not the cookies, and every authenticated call looks signed
+  // out. The backend already sets `allow_credentials=True` with an explicit
+  // origin list, which is what makes this legal.
+  withCredentials: true,
 });
 
 const LANGUAGE_STORAGE_KEY = "mynetaji:language";
@@ -963,4 +970,75 @@ export async function fetchMpPerformanceDebates({ id, page = 1, pageSize = 20 })
     page_size: pageSize,
   });
   return toPage(data?.debates, toDebate);
+}
+
+/**
+ * `GET /get-data-freshness` — when each tier's MyNeta/ADR data was last pulled.
+ *
+ * Returned per tier rather than per politician because that is what it is: a
+ * property of the last ingestion run, not of the person on screen. Comes back
+ * as `{ cm: {...}, mp: {...}, minister: {...} }`, with a tier omitted entirely
+ * when nothing has been ingested for it — so a missing entry means "no data
+ * yet", not "unknown date", and the UI can stay silent rather than guess.
+ */
+export async function fetchDataFreshness() {
+  const { data } = await api.get("/get-data-freshness");
+  const datasets = data?.datasets ?? {};
+
+  return Object.fromEntries(
+    Object.entries(datasets)
+      .filter(([, entry]) => entry?.data_updated_at)
+      .map(([tier, entry]) => [
+        tier,
+        {
+          tier,
+          updatedAt: entry.data_updated_at,
+          source: entry.source ?? null,
+          sourceDetail: entry.source_detail ?? null,
+          sourceUrl: entry.source_url ?? null,
+        },
+      ]),
+  );
+}
+
+/** Where the browser goes to start Google sign-in. */
+export function googleLoginUrl() {
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  return `${base.replace(/\/$/, "")}/auth/google_login`;
+}
+
+/**
+ * Hand the browser to the backend, which redirects on to Google.
+ *
+ * A full navigation rather than an XHR: the endpoint answers with a 307 to
+ * `accounts.google.com`, and fetch would either follow it into a cross-origin
+ * response the page cannot read or be blocked by CORS outright. OAuth is a
+ * navigation flow, so this navigates.
+ */
+export function startGoogleLogin() {
+  if (typeof window === "undefined") return;
+  window.location.href = googleLoginUrl();
+}
+
+/**
+ * `GET /auth/me` — the signed-in user, or `null` when there is no session.
+ *
+ * The cookies are httpOnly, so this request is the only way the client can
+ * find out whether it is signed in. A 401 is an answer, not a failure: it
+ * resolves to `null` so callers can branch on it without a try/catch, while a
+ * network or server fault still throws and surfaces as an error state.
+ */
+export async function fetchSession() {
+  try {
+    const { data } = await api.get("/auth/me");
+    return data?.user ?? null;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) return null;
+    throw error;
+  }
+}
+
+/** `POST /auth/logout` — clears both session cookies server-side. */
+export async function logoutSession() {
+  await api.post("/auth/logout", {});
 }

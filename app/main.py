@@ -6,10 +6,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api import (
+    auth,
     chief_ministers,
     feedback,
     feeds,
     highlights,
+    metadata,
     ministers,
     mps,
     performance,
@@ -66,6 +68,7 @@ app.add_middleware(
 )
 
 for module in (
+    auth,
     mps,
     chief_ministers,
     ministers,
@@ -74,5 +77,6 @@ for module in (
     performance,
     feeds,
     feedback,
+    metadata,
 ):
     app.include_router(module.router)

@@ -11,6 +11,9 @@ import { BottomActions } from "@/components/BottomActions";
 import { PillTabs } from "@/components/Leaderboard";
 import { HOME_TOUR_STEPS } from "@/components/onboarding/homeTour";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
+import { useSession, startGoogleLogin } from "@/hooks/useSession";
+import { LocationPermission } from "@/components/auth/LocationPermission";
+import { DataFreshnessLine } from "@/components/DataFreshness";
 import { ProfileIdentityCard } from "@/components/profile/ProfileIdentityCard";
 import { ProfilePanel } from "@/components/profile/ProfilePanel";
 import { LiveDot } from "@/components/brief/LiveDot";
@@ -344,6 +347,10 @@ export function Home() {
     setTimeout(() => setFeedbackReaction(reaction), 240);
   }, []);
 
+  // Read before `resolveStage`, which branches on it — declaring it after the
+  // call puts both names in the temporal dead zone.
+  const { isAuthenticated, isPending: isSessionPending } = useSession();
+
   const stage = resolveStage({
     geoError,
     isLocating,
@@ -351,6 +358,8 @@ export function Home() {
     isLoadingSeats,
     isError,
     hasSubject: Boolean(subject),
+    isAuthenticated,
+    isSessionPending,
     // A linked CM shows the loading screen, not the location prompt, until
     // its fetch resolves into the page.
     isSeeding: Boolean(cmStateKey && !seededCm),
@@ -385,12 +394,26 @@ export function Home() {
 
   return (
     <main className="flex min-h-dvh flex-col">
+      {/* Nothing at all until the session query answers — see `resolveStage`. */}
+      {stage === "booting" && <div className="flex-1" />}
+
       {stage === "landing" && (
         // The landing page scrolls now, so it fills the column rather than
         // being centred in it — `items-center` would pin a tall page mid-screen.
         <div className="flex-1">
-          <Landing onAllowLocation={handleAllowLocation} isBusy={isLocating} />
+          <Landing onContinueWithGoogle={startGoogleLogin} />
         </div>
+      )}
+
+      {/* Asked only once signed in: the browser grants one permission prompt
+          per origin in practice, and spending it before the reader has any
+          reason to trust the app is how you earn a permanent refusal. */}
+      {stage === "location" && (
+        <LocationPermission
+          onAllow={handleAllowLocation}
+          isBusy={isLocating}
+          error={geoError ? (GEO_ERROR_COPY[geoError] ?? "auth.locationFailed") : null}
+        />
       )}
 
       {/* The wait between the landing screen and the main page: the main
@@ -407,15 +430,6 @@ export function Home() {
           switcher={
             <HomeTierTabs value={homeTier} onChange={setHomeTier} />
           }
-        />
-      )}
-
-      {stage === "geo-error" && (
-        <ErrorScreen
-          overline={t(`geo.${geoError}.overline`)}
-          title={t(`geo.${geoError}.title`)}
-          body={t(`geo.${geoError}.body`)}
-          onRetry={handleAllowLocation}
         />
       )}
 
@@ -489,6 +503,10 @@ export function Home() {
 
           <motion.div {...rise(0.1)} className="shrink-0">
             <ProfileIdentityCard subject={subject} />
+            {/* Sits under the card rather than inside it: this is a fact about
+                the dataset, not about the person, and putting it in the card
+                would read as another of their attributes. */}
+            <DataFreshnessLine tier={subject.tier} className="mt-2.5" />
           </motion.div>
 
           {/* `flex-1` so the bottom bar still sits at the foot of a tall
@@ -858,6 +876,17 @@ function titleCase(value) {
 // Silence unused warning if RANK_ORDER isn't referenced.
 void RANK_ORDER;
 
+// Every way locating can fail, in the words the reader sees. `unavailable`
+// and `timeout` share a line: both mean "we asked and got nothing back", and
+// splitting them would be a distinction without a difference to anyone.
+const GEO_ERROR_COPY = {
+  denied: "auth.locationDenied",
+  unsupported: "auth.locationUnsupported",
+  timeout: "auth.locationFailed",
+  unavailable: "auth.locationFailed",
+};
+
+
 function resolveStage({
   geoError,
   isLocating,
@@ -866,15 +895,29 @@ function resolveStage({
   isError,
   hasSubject,
   isSeeding,
+  isAuthenticated,
+  isSessionPending,
 }) {
-  // A resolved subject wins outright: a minister deep link isn't
-  // location-derived, so it must reach the card without ever waiting on
-  // (or requiring) `coords`.
+  // A resolved subject wins outright: a shared `?share=` link points at one
+  // named politician and carries everything needed to render them, so it is
+  // its own entry point and reaches the card without waiting on location. It
+  // asks for no location either, which is what the auth-first rule is there to
+  // protect.
   if (hasSubject) return "results";
+
+  // Nothing is decided until the session query settles. Rendering the landing
+  // screen first would flash a sign-in prompt at somebody who is already
+  // signed in, on every single load.
+  if (isSessionPending) return "booting";
+  if (!isAuthenticated) return "landing";
+
   if (isSeeding) return "locating";
-  if (geoError) return "geo-error";
   if (isLocating) return "locating";
-  if (!coords) return "landing";
+  // Location trouble keeps the reader on the permission screen, which carries
+  // the reason and the retry, rather than sending them to a separate error
+  // page they then have to navigate back from.
+  if (geoError) return "location";
+  if (!coords) return "location";
   if (isLoadingSeats) return "locating";
   if (isError) return "fetch-error";
   return "empty";

@@ -3,6 +3,8 @@
 import { useAnimationControls, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { usesAngryVerdict } from "@/lib/angryVerdict";
+
 /**
  * Sequences the slap/rose micro-interaction for one card.
  *
@@ -54,6 +56,9 @@ const MESSAGES = {
   // roster includes plenty of women.
   slap: "👋 Wait… the slap is on its way…",
   rose: "🌹 Wait… giving a rose…",
+  // Shown instead of `slap` for the politicians `lib/angryVerdict` covers, so
+  // the waiting line matches the disc that was actually pressed.
+  angry: "😠 Wait… registering how you feel…",
 };
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,7 +77,7 @@ function animate(controls, definition) {
  * timeline. Keeping refs out of the return value matters — the returned object
  * is read during render, and React forbids reading refs there.
  */
-export function useVoteChoreography({ stageRef, portraitRef, buttonsRef }) {
+export function useVoteChoreography({ stageRef, portraitRef, buttonsRef, subject }) {
   // Survives unmount mid-flight (switching ministry remounts the card).
   const aliveRef = useRef(true);
   const busyRef = useRef(false);
@@ -252,7 +257,14 @@ export function useVoteChoreography({ stageRef, portraitRef, buttonsRef }) {
     isBusy: phase !== "idle",
     // Only while winding up: the banner clears the moment the hand launches so
     // it never sits over the animation it was announcing.
-    message: phase === "winding" ? MESSAGES[activeChoice] : null,
+    message:
+      phase === "winding"
+        ? MESSAGES[
+            activeChoice === "slap" && usesAngryVerdict(subject)
+              ? "angry"
+              : activeChoice
+          ]
+        : null,
     impactDirection,
     showSlapMark: phase === "impact" && activeChoice === "slap",
     showBloom: phase === "impact" && activeChoice === "rose",
