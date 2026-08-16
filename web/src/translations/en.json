@@ -423,6 +423,6 @@
     "locationFailed": "We couldn't read your location. Please try again.",
     "locationApiFailed": "We couldn't look up your representatives just now. Please try again.",
     "noRepresentative": "We couldn't find a representative for that location. It may be outside the constituencies we cover yet.",
-    "locationPrivacy": "Used once to find your constituency. We don't store it."
+    "locationPrivacy": "Saved on this device so we don't ask again. Sign out to remove it."
   }
 }

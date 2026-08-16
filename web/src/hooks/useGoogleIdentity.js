@@ -25,7 +25,6 @@ import {
  */
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
-const DEFAULT_WIDTH = 320;
 
 export function useGoogleIdentity(onCredential, locale) {
   const slotRef = useRef(null);
@@ -40,7 +39,11 @@ export function useGoogleIdentity(onCredential, locale) {
     GOOGLE_CLIENT_ID ? "loading" : "misconfigured",
   );
   const [attempt, setAttempt] = useState(0);
-  const [width, setWidth] = useState(DEFAULT_WIDTH);
+  // `null` until the slot has been measured. Rendering at a guessed width
+  // first and correcting it afterwards builds the button twice, and the first
+  // one is live and clickable for the moment before it is thrown away — which
+  // is exactly the press a reader makes on a freshly opened page.
+  const [width, setWidth] = useState(null);
 
   // Claim the credential callback while mounted. GIS has exactly one, so with
   // two buttons on the page the last mounted wins — which is harmless, because
@@ -76,6 +79,7 @@ export function useGoogleIdentity(onCredential, locale) {
   }, []);
 
   useEffect(() => {
+    if (width === null) return;
     if (!GOOGLE_CLIENT_ID) {
       // Nothing to load, and nothing the reader can do about it — but whoever
       // deployed it should not have to guess why the button is inert.

@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Globe } from "lucide-react";
 
+import { useDismissOnBack } from "@/hooks/useDismissOnBack";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_POP } from "@/lib/motion";
 
@@ -20,6 +21,11 @@ import { SPRING_POP } from "@/lib/motion";
  */
 export function LanguageModal({ open, onClose, dismissible = false }) {
   const { t, language, languages, setLanguage } = useTranslation();
+
+  // Only when it can actually be dismissed. The first-run prompt has no way
+  // out but choosing, so giving Back an entry to spend there would swallow the
+  // press and leave the modal exactly where it was.
+  useDismissOnBack(dismissible && open, onClose);
 
   function choose(code) {
     setLanguage(code);

@@ -5,6 +5,7 @@ import { ChevronRight, Globe, LogOut, MessageCircle, Sparkles, X } from "lucide-
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { useDismissOnBack } from "@/hooks/useDismissOnBack";
 import { useLogout, useSession } from "@/hooks/useSession";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_SHEET } from "@/lib/motion";
@@ -37,6 +38,10 @@ export function Sidebar({
   const router = useRouter();
   const { user, isAuthenticated } = useSession();
   const logout = useLogout();
+
+  // Back / the iOS edge-swipe closes the drawer rather than leaving the page,
+  // the same way it closes a bottom sheet.
+  useDismissOnBack(open, onClose);
 
   // Lock body scroll and wire Escape while open — mirrors BottomSheet so every
   // overlay in the app behaves the same way.

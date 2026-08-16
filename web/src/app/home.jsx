@@ -100,7 +100,8 @@ export function Home() {
   // coming back doesn't discard it. A `?share=cm&lat=&lng=` link needs no such
   // help: those coordinates live in the URL, which the back navigation
   // restores along with the page.
-  const { coords: storedCoords, setCoords } = useLocationState();
+  const { coords: storedCoords, setCoords, isRestoring: isRestoringLocation } =
+    useLocationState();
   const router = useRouter();
   // Set when the reader taps the wordmark to start over. The URL is rewritten
   // at the same moment, but this is what the render actually keys off: clearing
@@ -355,6 +356,10 @@ export function Home() {
     geoError,
     isLocating,
     coords,
+    // A location saved on this device is read a tick after mount. Until then
+    // there is no answer yet, and treating that as "no location" would flash
+    // the permission screen at a reader who granted it long ago.
+    isRestoringLocation,
     isLoadingSeats,
     isError,
     hasSubject: Boolean(subject),
@@ -891,6 +896,7 @@ function resolveStage({
   geoError,
   isLocating,
   coords,
+  isRestoringLocation,
   isLoadingSeats,
   isError,
   hasSubject,
@@ -911,6 +917,7 @@ function resolveStage({
   if (isSessionPending) return "booting";
   if (!isAuthenticated) return "landing";
 
+  if (isRestoringLocation) return "booting";
   if (isSeeding) return "locating";
   if (isLocating) return "locating";
   // Location trouble keeps the reader on the permission screen, which carries

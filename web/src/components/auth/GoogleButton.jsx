@@ -63,25 +63,36 @@ export function GoogleButton({
     onUnavailable?.(unavailableReason);
   }, [unavailableReason, onUnavailable]);
 
+  // Loading is the common first-visit case, and an empty space where the only
+  // call to action belongs reads as a broken page. SYL's button stands in
+  // until Google's is ready — laid over the slot rather than beside it, so the
+  // swap does not move anything, and never over Google's button once it is
+  // live, because covering that button is what makes Google refuse the click.
+  const isPlaceholder = !isReady;
+
   return (
-    <div ref={slotRef} className={`flex w-full justify-center ${className}`}>
+    <div
+      ref={slotRef}
+      className={`relative flex min-h-12 w-full items-center justify-center ${className}`}
+    >
       {/* Google's button. The ring and shadow sit on this wrapper; the button
           itself is untouched, which is what keeps it clickable. */}
       <div
         ref={containerRef}
-        className={`overflow-hidden rounded-full ${
-          isReady ? "shadow-card ring-1 ring-ink/10 ring-inset" : ""
-        }`}
+        className={
+          isReady ? "overflow-hidden rounded-full shadow-card ring-1 ring-ink/10 ring-inset" : ""
+        }
       />
 
-      {/* Only reachable when GIS is unavailable: pressing it tries again. */}
-      {isUnavailable && (
+      {isPlaceholder && (
         <motion.button
           type="button"
-          onClick={retry}
-          whileTap={{ scale: 0.975 }}
+          // Inert while GIS is still loading; the retry once it has given up.
+          onClick={isUnavailable ? retry : undefined}
+          disabled={!isUnavailable}
+          whileTap={isUnavailable ? { scale: 0.975 } : undefined}
           transition={SPRING_PRESS}
-          className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-surface px-6 py-3.5 font-display text-sm font-bold text-ink shadow-card ring-1 ring-ink/10 ring-inset transition-shadow hover:shadow-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="absolute inset-0 inline-flex w-full items-center justify-center gap-3 rounded-full bg-surface px-6 py-3.5 font-display text-sm font-bold text-ink shadow-card ring-1 ring-ink/10 ring-inset transition-shadow hover:shadow-lift disabled:cursor-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <GoogleMark />
           {t("auth.continueWithGoogle")}
