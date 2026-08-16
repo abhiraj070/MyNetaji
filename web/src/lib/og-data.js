@@ -7,7 +7,12 @@
  * (WhatsApp, X, LinkedIn, …) on the same share URL collapses to one backend
  * query rather than one per fetch.
  */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// The same list `lib/api` accepts. There is no page to be same-site with on
+// the server, and these lookups carry no cookies, so the first entry — the
+// canonical API — is the right one.
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000")
+  .split(",")[0]
+  .trim();
 
 async function apiPost(path, body, revalidate = 3600) {
   const res = await fetch(`${API_BASE}${path}`, {

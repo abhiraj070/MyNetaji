@@ -2,8 +2,78 @@ import axios from "axios";
 
 import { forgetLocation } from "@/lib/location";
 
+/**
+ * Where the API lives — one value, or several to choose from.
+ *
+ * A comma-separated list lets one build serve more than one domain, which is
+ * what a migration looks like: the app answers on both the old host and the
+ * new one, and each needs the API that is *same-site with it*. Anything else
+ * makes the session cookies third-party, which Safari drops by default — the
+ * failure this whole domain layout exists to avoid.
+ *
+ *   NEXT_PUBLIC_API_URL=https://api.meetyourleader.in,https://old-api.example
+ *
+ * The entry matching the page's own site wins; with nothing matching (or on
+ * the server, where there is no page) the first entry is used, so a single
+ * value behaves exactly as it always has.
+ */
+const API_CANDIDATES = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000")
+  .split(",")
+  .map((entry) => entry.trim())
+  .filter(Boolean);
+
+/**
+ * The registrable domain, near enough for this purpose: `api.example.in` and
+ * `example.in` are one site, `example.in` and `other.app` are not. A real
+ * public-suffix list would also split `foo.up.railway.app` from
+ * `bar.up.railway.app`, which this treats as one site — it only ever costs a
+ * warning that is not raised, never a wrong API.
+ */
+function siteOf(hostname) {
+  return hostname.split(".").slice(-2).join(".");
+}
+
+function isSameSite(candidate, location) {
+  try {
+    const url = new URL(candidate, location.origin);
+    return (
+      url.protocol === location.protocol &&
+      siteOf(url.hostname) === siteOf(location.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function pickApiBase() {
+  if (API_CANDIDATES.length === 1 || typeof window === "undefined") {
+    return API_CANDIDATES[0];
+  }
+  return (
+    API_CANDIDATES.find((candidate) => isSameSite(candidate, window.location)) ??
+    API_CANDIDATES[0]
+  );
+}
+
+export const API_BASE = pickApiBase();
+
+/*
+ * Said once, in the console, when the API the app ends up calling is not
+ * same-site with it. It is a deployment mistake to catch — the variable is
+ * inlined at build time, so a service that was never rebuilt after it changed
+ * quietly points somewhere else — and not a reason to break the page.
+ */
+if (typeof window !== "undefined" && !isSameSite(API_BASE, window.location)) {
+  console.warn(
+    `[api] ${API_BASE} is not same-site with ${window.location.origin}. ` +
+      "Session cookies will be third-party, which Safari blocks by default. " +
+      "Check NEXT_PUBLIC_API_URL — it is inlined at build time, so the service " +
+      "needs rebuilding after it changes.",
+  );
+}
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
+  baseURL: API_BASE,
   timeout: 15_000,
   headers: { "Content-Type": "application/json" },
   // The session is a pair of httpOnly cookies set by `POST /auth/google`.

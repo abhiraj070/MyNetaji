@@ -21,7 +21,11 @@ class settings(BaseSettings):
     # token endpoint directly.
     CLIENT_ID : str
     CLIENT_SECRET : str
+    # One origin, or several comma-separated. Production:
+    # https://meetyourleader.in
     FRONTEND_URL: str = "http://localhost:3000"
+    # Filled in by the validator below: every entry, in order.
+    FRONTEND_URLS: list[str] = []
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
     ACCESS_TOKEN_EXPIRE_MINUTES: int
@@ -31,14 +35,34 @@ class settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_frontend_url(self):
-        value = (self.FRONTEND_URL or "").strip()
-        if not value.startswith(("http://", "https://")):
+        """One frontend origin, or several separated by commas.
+
+        A list is what a migration looks like — the app answering on an old
+        host and a new one at the same time. Every entry is validated, so a
+        typo in the second one is caught at startup rather than at the moment
+        something reads it.
+
+        `FRONTEND_URL` stays the canonical single value (the first entry) for
+        the code that wants one; `FRONTEND_URLS` has them all. Note this is not
+        what authorises browser requests — that is `CORS_ORIGINS`, which has
+        always taken a list.
+        """
+        raw = (self.FRONTEND_URL or "").strip()
+        entries = [part.strip().rstrip("/") for part in raw.split(",") if part.strip()]
+        if not entries:
             raise ValueError(
-                f"FRONTEND_URL must be an absolute http(s) URL, got "
+                "FRONTEND_URL must be an absolute http(s) URL, got "
                 f"{self.FRONTEND_URL!r}. A blank value in .env counts as "
-                f"set and overrides the default."
+                "set and overrides the default."
             )
-        self.FRONTEND_URL = value.rstrip("/")
+        for entry in entries:
+            if not entry.startswith(("http://", "https://")):
+                raise ValueError(
+                    f"FRONTEND_URL entries must be absolute http(s) URLs, got "
+                    f"{entry!r} in {self.FRONTEND_URL!r}."
+                )
+        self.FRONTEND_URLS = entries
+        self.FRONTEND_URL = entries[0]
         return self
 
     @model_validator(mode="after")
