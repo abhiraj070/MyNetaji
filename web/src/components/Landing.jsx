@@ -100,7 +100,10 @@ export function Landing() {
   // Sign-in is the entry now: the reader authenticates first, and location is
   // asked for on the far side of that. The button says exactly what pressing
   // it does — the old "Find Your CM & MP" promised the step after this one.
-  const cta = <ContinueWithGoogle className="sm:w-auto" />;
+  // No `sm:w-auto`: the slot has to have a width of its own for Google's
+  // button to be sized against, and a shrink-to-fit box measures zero before
+  // there is a button in it. The button inside stays its own size.
+  const cta = <ContinueWithGoogle />;
 
   return (
     <div className="w-full">

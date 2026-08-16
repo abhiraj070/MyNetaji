@@ -25,6 +25,8 @@ import {
  */
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
+// "Let Google size it": the option is omitted rather than sent as a number.
+const NATURAL_WIDTH = 0;
 
 export function useGoogleIdentity(onCredential, locale) {
   const slotRef = useRef(null);
@@ -62,14 +64,25 @@ export function useGoogleIdentity(onCredential, locale) {
   // Google's button is laid out in pixels, so it has to be told how wide the
   // slot is — and told again when that changes, which on this app means a
   // breakpoint or a language switch rather than anything continuous.
+  //
+  // A slot that measures nothing is a real case, not a glitch: a shrink-to-fit
+  // container has no width until something is inside it, and what goes inside
+  // it is the very button being measured for. Waiting for a number that can
+  // only arrive after the button exists leaves the button unbuilt and the
+  // placeholder disabled forever, which is exactly how it failed on desktop.
+  // `NATURAL_WIDTH` breaks that circle: build the button at the size Google
+  // gives it, and let the slot take its width from the result.
   useEffect(() => {
     const slot = slotRef.current;
     if (!slot) return;
 
     const measure = () => {
       const measured = Math.round(slot.getBoundingClientRect().width);
-      if (!measured) return;
-      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, measured)));
+      setWidth(
+        measured >= MIN_WIDTH
+          ? Math.min(MAX_WIDTH, measured)
+          : NATURAL_WIDTH,
+      );
     };
 
     measure();
@@ -108,7 +121,7 @@ export function useGoogleIdentity(onCredential, locale) {
           shape: "pill",
           text: "continue_with",
           logo_alignment: "center",
-          width,
+          ...(width === NATURAL_WIDTH ? {} : { width }),
           // Google's own wording, in the language the rest of the page is in.
           locale,
         });

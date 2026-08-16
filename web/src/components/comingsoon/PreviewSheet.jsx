@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 
+import { useDismissOnBack } from "@/hooks/useDismissOnBack";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_SHEET } from "@/lib/motion";
 
@@ -22,6 +23,11 @@ import { SPRING_SHEET } from "@/lib/motion";
  * bolted onto it.
  */
 export function PreviewSheet({ open, onClose, label, header, children }) {
+  // Back / the iOS edge-swipe closes this sheet rather than leaving the page,
+  // the same as every sheet built on `BottomSheet`. This one is hand-rolled,
+  // so it has to ask.
+  useDismissOnBack(open, onClose);
+
   const { t } = useTranslation();
   const dragControls = useDragControls();
 
