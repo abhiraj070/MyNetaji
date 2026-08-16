@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
@@ -28,6 +28,7 @@ export function BottomSheet({
   autoFocus = false,
 }) {
   const contentRef = useRef(null);
+  const dragControls = useDragControls();
   const { t } = useTranslation();
 
   // Back / the iOS edge-swipe closes this sheet rather than leaving the page.
@@ -102,13 +103,31 @@ export function BottomSheet({
                 transition: { duration: 0.22, ease: [0.4, 0, 1, 1] },
               }}
               transition={SPRING_SHEET}
+              drag="y"
+              dragControls={dragControls}
+              // Only the header starts a drag; the body keeps its own scroll,
+              // so flicking a long list never dismisses the sheet by accident.
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.4 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 120 || info.velocity.y > 600) onClose();
+              }}
               className={`absolute inset-x-0 bottom-0 flex ${sheetHeight} flex-col rounded-t-[36px] bg-surface shadow-lift sm:mx-auto sm:max-w-2xl sm:rounded-t-[40px] lg:max-w-3xl`}
             >
+              {/* The grab area: the handle and the title row together, which is
+                  the part of a sheet a thumb reaches for. `touch-action: none`
+                  hands the gesture to the drag rather than the page scroller. */}
               <div
-                aria-hidden
-                className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-rule"
-              />
-              <header className="flex items-start justify-between gap-3 px-6 pt-4 pb-3">
+                onPointerDown={(event) => dragControls.start(event)}
+                style={{ touchAction: "none" }}
+                className="shrink-0 cursor-grab rounded-t-[36px] active:cursor-grabbing sm:rounded-t-[40px]"
+              >
+                <div
+                  aria-hidden
+                  className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-rule"
+                />
+                <header className="flex items-start justify-between gap-3 px-6 pt-4 pb-3">
                 <div className="min-w-0">
                   <h2 className="font-display text-2xl leading-tight font-bold text-ink sm:text-3xl">
                     {title}
@@ -122,6 +141,8 @@ export function BottomSheet({
                 <motion.button
                   type="button"
                   onClick={onClose}
+                  // Pressing the close button must not also start a drag.
+                  onPointerDown={(event) => event.stopPropagation()}
                   aria-label={t("common.close")}
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.92 }}
@@ -130,7 +151,8 @@ export function BottomSheet({
                 >
                   <X className="size-4" strokeWidth={2} />
                 </motion.button>
-              </header>
+                </header>
+              </div>
               {/* The body arrives a beat behind the sheet itself, so the panel
                 lands first and its contents settle into it. */}
               <motion.div

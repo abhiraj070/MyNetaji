@@ -19,6 +19,11 @@ export function LeaderboardSheet({
       onClose={onClose}
       title="Leaderboard"
       subtitle="How they stack up nationally"
+      // The same fixed height the Search sheet uses. Without it the sheet is
+      // sized by its contents: it opens at the height of a few skeleton rows
+      // and then jumps to whatever the loaded board measures, which is the
+      // resize that made opening the leaderboard feel broken.
+      size="tall"
     >
       <div className="mb-4">
         <Badge {...BADGES.hallOfFame} size="sm" tilt />

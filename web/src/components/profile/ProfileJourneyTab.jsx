@@ -46,9 +46,15 @@ export function ProfileJourneyTab({ subject, onOpenAssets }) {
     <div className="pb-6">
       {entries.length > 0 && (
         <ol className="relative space-y-4 pl-5">
+          {/* The rail. It and every node are centred on the same axis with
+              `-translate-x-1/2`, so the line meets each circle's middle no
+              matter how tall a card grows or how the text wraps — the two used
+              to state their own left edges and sat 3.5px apart. `left-1` here
+              and `left-[-1rem]` on the node are the same x: the node is inside
+              the list item, which starts at the list's `pl-5`. */}
           <span
             aria-hidden
-            className="absolute top-2 bottom-2 left-[7px] w-px bg-rule"
+            className="absolute top-2 bottom-2 left-1 w-px -translate-x-1/2 bg-rule"
           />
           {entries.map((entry, index) => (
             <TimelineCard
@@ -143,7 +149,7 @@ function TimelineCard({ entry, subject, onOpenAssets }) {
     <li className="relative">
       <span
         aria-hidden
-        className="absolute top-1.5 left-[-1.375rem] size-3 rounded-full bg-brand ring-4 ring-brand-wash"
+        className="absolute top-1.5 left-[-1rem] size-3 -translate-x-1/2 rounded-full bg-laurel ring-4 ring-laurel-wash"
       />
 
       <div className="overflow-hidden rounded-card bg-surface shadow-card ring-1 ring-ink/5">
@@ -286,13 +292,13 @@ function TimelineSkeleton() {
       <ol className="relative animate-pulse space-y-4 pl-5">
         <span
           aria-hidden
-          className="absolute top-2 bottom-2 left-[7px] w-px bg-rule"
+          className="absolute top-2 bottom-2 left-1 w-px -translate-x-1/2 bg-rule"
         />
         {Array.from({ length: 3 }, (_, i) => (
           <li key={i} className="relative">
             <span
               aria-hidden
-              className="absolute top-1.5 left-[-1.375rem] size-3 rounded-full bg-rule"
+              className="absolute top-1.5 left-[-1rem] size-3 -translate-x-1/2 rounded-full bg-rule"
             />
             <div className="rounded-card bg-surface px-4 py-3.5 shadow-card ring-1 ring-ink/5">
               <span className="block h-2.5 w-12 rounded bg-rule" />

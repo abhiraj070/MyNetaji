@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
 import { useState } from "react";
 
+import { RouteGuard } from "@/components/auth/RouteGuard";
 import { LanguageProvider } from "@/lib/i18n";
 import { LocationProvider } from "@/lib/location";
 import { OnboardingProvider } from "@/lib/onboarding";
@@ -53,7 +54,10 @@ export function Providers({ children }) {
              * whichever route the reader arrived on.
              */}
             <SubjectProvider>
-              <OnboardingProvider>{children}</OnboardingProvider>
+              <OnboardingProvider>
+                {/* Above every page, below the session it reads. */}
+                <RouteGuard>{children}</RouteGuard>
+              </OnboardingProvider>
             </SubjectProvider>
           </LocationProvider>
         </LanguageProvider>
