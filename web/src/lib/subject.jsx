@@ -6,6 +6,7 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { fetchCmLocation, fetchMpLocation } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { titleCase } from "./text";
+import { useSession } from "@/hooks/useSession";
 
 /**
  * Who the app is currently talking about, held above the router.
@@ -81,10 +82,16 @@ export function useResolvedSubject(coords, { fallbackSelection = null } = {}) {
 
   const wantsMp = homeTier === "mp";
 
+  // Both lookups are authenticated. A returning reader arrives with their
+  // location already restored, so without this the query fires on the landing
+  // screen, is refused, and caches that refusal — which is then what the app
+  // shows them the moment they sign in, until a reload clears it.
+  const { isAuthenticated } = useSession();
+
   const cmQuery = useQuery({
     queryKey: ["cm-location", language, coords?.latitude, coords?.longitude],
     queryFn: () => fetchCmLocation(coords),
-    enabled: coords !== null && !wantsMp,
+    enabled: coords !== null && !wantsMp && isAuthenticated,
   });
 
   /*
@@ -99,7 +106,7 @@ export function useResolvedSubject(coords, { fallbackSelection = null } = {}) {
   const mpQuery = useQuery({
     queryKey: ["mp-location", language, coords?.latitude, coords?.longitude],
     queryFn: () => fetchMpLocation(coords),
-    enabled: coords !== null && wantsMp,
+    enabled: coords !== null && wantsMp && isAuthenticated,
   });
 
   const query = wantsMp ? mpQuery : cmQuery;

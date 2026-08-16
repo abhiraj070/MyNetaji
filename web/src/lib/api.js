@@ -33,6 +33,23 @@ function activeLanguage() {
 }
 
 /**
+ * Which session the app is on. Bumped whenever one begins.
+ *
+ * A 401 means "these cookies are no good" — but only about the session the
+ * request was sent under. A call made while signed out is refused, and its
+ * refusal can arrive after the reader has signed in; taken at face value it
+ * ends the session they just started, which looked like signing in and being
+ * dropped straight back onto the sign-in screen. Stamping the request and
+ * comparing on the way back is what keeps an old answer from deciding a newer
+ * question — including for any request added here later.
+ */
+let sessionEpoch = 0;
+
+export function beginSession() {
+  sessionEpoch += 1;
+}
+
+/**
  * Attaches the active language to every request in one place, rather than
  * threading a `lang` argument through all eleven call sites.
  *
@@ -41,6 +58,9 @@ function activeLanguage() {
  * that ignores it is unaffected.
  */
 api.interceptors.request.use((config) => {
+  // Which session this request belongs to — see `SESSION_ENDED_EVENT` below.
+  config.sessionEpoch = sessionEpoch;
+
   const lang = activeLanguage();
   const method = (config.method ?? "get").toLowerCase();
 
@@ -73,7 +93,7 @@ function isSessionExpired(error) {
 }
 
 api.interceptors.response.use(undefined, (error) => {
-  if (isSessionExpired(error)) {
+  if (isSessionExpired(error) && error.config?.sessionEpoch === sessionEpoch) {
     rememberUser(null);
     window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
   }
@@ -926,6 +946,9 @@ export async function fetchDataFreshness() {
 export async function googleSignIn(credential) {
   const { data } = await api.post("/auth/google", { credential });
   const user = data?.user ?? null;
+  // Before anything else: from here on, refusals collected under the previous
+  // session say nothing about this one.
+  beginSession();
   rememberUser(user);
   return user;
 }
@@ -1012,6 +1035,7 @@ export async function logoutSession() {
   } finally {
     // Forgotten locally either way: leaving the reader looking signed in
     // because the request failed would be the worse of the two outcomes.
+    beginSession();
     rememberUser(null);
     forgetLocation();
   }

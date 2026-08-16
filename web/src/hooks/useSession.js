@@ -116,6 +116,11 @@ export function useGoogleLogin() {
     mutationKey: GOOGLE_LOGIN_KEY,
     mutationFn: googleSignIn,
     onSuccess: (user) => {
+      // Just the session: every authenticated query is gated on it, so there is
+      // nothing from the signed-out screen to throw away. Clearing here would
+      // instead blank the session for an instant and set every mounted query
+      // refetching at the one moment the app can least afford a stray failure.
+      // Signing out is where the cache is emptied.
       if (user) queryClient.setQueryData(SESSION_KEY, user);
     },
   });
