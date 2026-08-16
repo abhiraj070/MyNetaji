@@ -5,6 +5,7 @@ import { createContext, useContext, useMemo, useState } from "react";
 
 import { fetchCmLocation, fetchMpLocation } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import { titleCase } from "./text";
 
 /**
  * Who the app is currently talking about, held above the router.
@@ -196,16 +197,6 @@ export function buildMpSubject(mp, { isHome = true, t } = {}) {
     education: mp.education ?? null,
     isHome,
   };
-}
-
-/**
- * Constituency names arrive shouted from the source data ("NEW DELHI"), which
- * is how they are printed on a roll, not how they should read in a sentence.
- */
-function titleCase(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .replace(/(?:^|[\s-(])\S/g, (character) => character.toUpperCase());
 }
 
 /** The identity a vote, a share and a card remount are all keyed on. */

@@ -68,10 +68,3 @@ export function verdictGlyph(subject) {
   return usesAngryVerdict(subject) ? ANGRY_GLYPH : SLAP_GLYPH;
 }
 
-/**
- * The translation key for the negative verdict's label, so the word follows
- * the glyph — "Angry" rather than "Slap" — in whichever language is active.
- */
-export function verdictLabelKey(subject, { slap, angry }) {
-  return usesAngryVerdict(subject) ? angry : slap;
-}

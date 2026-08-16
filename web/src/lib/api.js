@@ -64,7 +64,7 @@ api.interceptors.request.use((config) => {
  */
 export const SESSION_ENDED_EVENT = "mynetaji:session-ended";
 
-export function isSessionExpired(error) {
+function isSessionExpired(error) {
   return (
     axios.isAxiosError(error) &&
     error.response?.status === 401 &&
@@ -329,125 +329,6 @@ export async function fetchHighlights() {
         : { data: null, failed: true };
     return slots;
   }, {});
-}
-
-/**
- * `GET /tweets` — recent X posts about one representative. The backend looks up
- * their stored `x_username`, queries the X API's recent-search endpoint, and
- * returns the raw v2 payload under `{ top_tweets }`.
- *
- * The endpoint identifies the subject by `(table, name)`, carried in the
- * request body — matching the backend's `TweetRequest`. `table` is the physical
- * table name, mapped here from the app-level `tier`.
- */
-export async function fetchTweets({ tier, name }) {
-  const table = tier === "cm" ? "chief_ministers" : "ministers";
-  const { data } = await api.post("/tweets", { table, name });
-  const payload = data?.top_tweets ?? {};
-
-  // The endpoint forwards the X API's own body verbatim with a 200, so an X-side
-  // failure (402 credits depleted, 401 auth, 429 rate limit) arrives as a
-  // *payload*, not an HTTP error. Detect that shape — an X "problem" object or
-  // `errors[]` with no `data`/`meta` — and throw, so the UI shows "couldn't
-  // load" with Retry rather than a misleading "no posts yet". A genuinely empty
-  // result (`data: []` or a `meta` with zero count) falls through to normalise.
-  const hasData = Array.isArray(payload.data);
-  const hasMeta = Boolean(payload.meta);
-  const looksLikeError =
-    !hasData &&
-    !hasMeta &&
-    (payload.status >= 400 ||
-      typeof payload.type === "string" ||
-      Array.isArray(payload.errors));
-  if (looksLikeError) {
-    throw new Error(payload.detail || payload.title || "Couldn't reach X");
-  }
-
-  return normalizeTweets(payload);
-}
-
-/** `[{id, ...}]` → `{ [id]: {...} }` for O(1) expansion lookups. */
-function indexBy(list, key) {
-  const map = {};
-  for (const item of list ?? []) map[item[key]] = item;
-  return map;
-}
-
-function normalizeAuthor(user) {
-  if (!user) return null;
-  return {
-    name: user.name ?? null,
-    username: user.username ?? null,
-    // The `_normal` variant X returns is a 48px thumbnail; dropping the suffix
-    // gives the full-resolution original for a crisp avatar.
-    avatar: user.profile_image_url?.replace("_normal", "") ?? null,
-    verified: Boolean(user.verified),
-    verifiedType: user.verified_type ?? null,
-  };
-}
-
-function normalizeMedia(m) {
-  return {
-    key: m.media_key,
-    type: m.type, // "photo" | "video" | "animated_gif"
-    url: m.url ?? m.preview_image_url ?? null,
-    preview: m.preview_image_url ?? m.url ?? null,
-    alt: m.alt_text ?? "",
-    width: m.width ?? null,
-    height: m.height ?? null,
-  };
-}
-
-/**
- * Flattens X's `data` + `includes` (users/media/referenced tweets) into a
- * self-contained tweet object the UI can render without cross-referencing.
- * Every expansion is optional: a payload without `includes` (the backend
- * currently requests none) degrades to text-only tweets rather than throwing.
- */
-export function normalizeTweets(payload) {
-  const raw = payload ?? {};
-  const users = indexBy(raw.includes?.users, "id");
-  const media = indexBy(raw.includes?.media, "media_key");
-  const tweets = indexBy(raw.includes?.tweets, "id");
-  const list = Array.isArray(raw.data) ? raw.data : [];
-
-  const resolveMedia = (keys) =>
-    (keys ?? []).map((k) => media[k]).filter(Boolean).map(normalizeMedia);
-
-  return list.map((t) => {
-    const metrics = t.public_metrics ?? {};
-    const quotedRef = (t.referenced_tweets ?? []).find(
-      (r) => r.type === "quoted",
-    );
-    const quotedRaw = quotedRef ? tweets[quotedRef.id] : null;
-
-    return {
-      id: t.id,
-      text: t.text ?? "",
-      createdAt: t.created_at ?? null,
-      author: normalizeAuthor(users[t.author_id]),
-      urls: t.entities?.urls ?? [],
-      media: resolveMedia(t.attachments?.media_keys),
-      metrics: {
-        replies: metrics.reply_count ?? 0,
-        // X's repost affordance folds retweets and quotes into one count.
-        reposts: (metrics.retweet_count ?? 0) + (metrics.quote_count ?? 0),
-        likes: metrics.like_count ?? 0,
-        bookmarks: metrics.bookmark_count ?? 0,
-        views: metrics.impression_count ?? 0,
-      },
-      quoted: quotedRaw
-        ? {
-            id: quotedRaw.id,
-            text: quotedRaw.text ?? "",
-            createdAt: quotedRaw.created_at ?? null,
-            author: normalizeAuthor(users[quotedRaw.author_id]),
-            urls: quotedRaw.entities?.urls ?? [],
-            media: resolveMedia(quotedRaw.attachments?.media_keys),
-          }
-        : null,
-    };
-  });
 }
 
 /**

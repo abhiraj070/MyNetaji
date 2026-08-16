@@ -142,15 +142,13 @@ export function useGoogleIdentity(onCredential, locale) {
     slotRef,
     /** Where GIS renders. Nothing else may style or transform it. */
     containerRef,
-    isReady: status === "ready",
-    isUnavailable: status === "unavailable" || status === "misconfigured",
-    /** Why sign-in is unavailable, for the screen to phrase it honestly. */
-    unavailableReason:
-      status === "misconfigured"
-        ? "gis_misconfigured"
-        : status === "unavailable"
-          ? "gis_unavailable"
-          : null,
+    /**
+     * `loading` | `ready` | `unavailable` (the script never loaded) |
+     * `misconfigured` (no client ID in this build). One value rather than a
+     * set of flags derived from it, so there is one thing to reason about and
+     * the screen decides what each state should say.
+     */
+    status,
     retry,
   };
 }

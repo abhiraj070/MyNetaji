@@ -44,6 +44,7 @@ import {
   useSubjectSelection,
 } from "@/lib/subject";
 import { NAV_CONTROL, NAV_MENU_BUTTON, NAV_SURFACE } from "@/lib/navStyles";
+import { titleCase } from "@/lib/text";
 
 /**
  * The two representatives a reader's own coordinates resolve to. MLAs are
@@ -872,12 +873,6 @@ function Toast({ message }) {
   );
 }
 
-function titleCase(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .replace(/(?:^|[\s-])\S/g, (character) => character.toUpperCase());
-}
-
 // Silence unused warning if RANK_ORDER isn't referenced.
 void RANK_ORDER;
 
@@ -890,7 +885,6 @@ const GEO_ERROR_COPY = {
   timeout: "auth.locationFailed",
   unavailable: "auth.locationFailed",
 };
-
 
 function resolveStage({
   geoError,

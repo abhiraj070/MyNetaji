@@ -5,6 +5,7 @@ import { Loader2, Search, X } from "lucide-react";
 
 import { useMpSearch } from "@/hooks/useMpSearch";
 import { highlight } from "@/lib/ministries";
+import { titleCase } from "@/lib/text";
 
 /**
  * Searchable MP picker.
@@ -272,8 +273,3 @@ function Marked({ runs }) {
   );
 }
 
-function titleCase(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .replace(/(?:^|[\s-(])\S/g, (character) => character.toUpperCase());
-}

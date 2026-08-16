@@ -12,6 +12,7 @@ import { toFriendlyError } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 
 import { ShareButton } from "./ShareButton";
+import { monogramOf, titleCase } from "@/lib/text";
 
 const TIER_COPY = {
   cm: { scope: "Chief Ministers across India's states" },
@@ -354,17 +355,6 @@ function AnimatedCount({ value, className }) {
   );
 }
 
-function monogramOf(name) {
-  const parts = String(name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (parts.length === 0) return "?";
-  return (
-    parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")
-  ).toUpperCase();
-}
-
 function CompactAvatar({ src, name }) {
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(src) && !failed;
@@ -419,12 +409,6 @@ function SkeletonRows() {
       ))}
     </ol>
   );
-}
-
-function titleCase(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .replace(/(?:^|[\s-])\S/g, (character) => character.toUpperCase());
 }
 
 function formatSecondary(tier, topper) {

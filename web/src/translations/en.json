@@ -401,8 +401,6 @@
     "blurb": "Sign in to find your MP, MLA and Chief Minister — their record, their promises, and your verdict.",
     "privacy": "We only use your Google account to sign you in.",
     "signingIn": "Signing you in…",
-    "failedTitle": "That sign-in didn't go through",
-    "cancelled": "You cancelled the Google sign-in. No harm done — try again when you're ready.",
     "exchangeFailed": "We couldn't complete sign-in with Google. Please try again.",
     "expiredCredential": "That Google sign-in took too long. Please try again.",
     "emailUnverified": "That Google account's email address isn't verified, so we can't sign you in.",
@@ -411,9 +409,7 @@
     "googleUnavailable": "We couldn't load Google sign-in. Check your connection or any ad blocker, then tap the button to retry.",
     "googleNotConfigured": "Google sign-in isn't set up for this site yet. Please try again later.",
     "serverError": "Something went wrong on our side. Please try again in a moment.",
-    "sessionExpired": "Your session has expired. Please sign in again.",
     "unreachable": "We couldn't reach the server. Check your connection and try again.",
-    "retry": "Try again",
     "locationTitle": "Find your representatives",
     "locationBody": "We need your location to find your MLA, MP and CM.",
     "allowLocation": "Allow Location",
@@ -421,8 +417,6 @@
     "locationDenied": "Location permission was denied. Allow it in your browser settings, then try again.",
     "locationUnsupported": "This browser can't share your location. Try Chrome, Safari or Firefox.",
     "locationFailed": "We couldn't read your location. Please try again.",
-    "locationApiFailed": "We couldn't look up your representatives just now. Please try again.",
-    "noRepresentative": "We couldn't find a representative for that location. It may be outside the constituencies we cover yet.",
     "locationPrivacy": "Saved on this device so we don't ask again. Sign out to remove it."
   }
 }

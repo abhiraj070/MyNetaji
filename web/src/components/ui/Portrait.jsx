@@ -1,18 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-/** "Pankaj Chaudhary" -> "PC". Falls back to a single glyph. */
-function monogramOf(name) {
-  const parts = String(name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (parts.length === 0) return "?";
-  return (
-    parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")
-  ).toUpperCase();
-}
+import { monogramOf } from "@/lib/text";
 
 /**
  * Rectangular 3:4 portrait with a serif monogram fallback.

@@ -1,5 +1,6 @@
 import { usesAngryVerdict, verdictGlyph } from "./angryVerdict";
 import { manifestoPoints } from "./manifesto";
+import { titleCase } from "./text";
 
 /**
  * Derives everything the Politician Profile sheet needs from a `subject`
@@ -10,12 +11,6 @@ import { manifestoPoints } from "./manifesto";
  * explicit `null`/empty result and render an honest "not available" state
  * instead of a fabricated one.
  */
-
-function titleCase(value) {
-  return String(value ?? "")
-    .toLowerCase()
-    .replace(/(?:^|[\s-])\S/g, (character) => character.toUpperCase());
-}
 
 /**
  * The one real "place" fact a subject has: a CM's state, a minister's
