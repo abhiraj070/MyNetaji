@@ -9,7 +9,7 @@ import { MpCombobox } from "./MpCombobox";
 import { PillTabs } from "./Leaderboard";
 import { useChiefMinisters } from "@/hooks/useChiefMinisters";
 import { useMinistries } from "@/hooks/useMinistries";
-import { toFriendlyError } from "@/lib/api";
+import { ErrorNote } from "@/components/ui/ErrorNote";
 
 // MLAs are deliberately absent — out of scope, and no data source exists.
 const TIERS = [
@@ -92,12 +92,7 @@ export function SearchSheet({
       )}
 
       {isError && (
-        <div
-          role="alert"
-          className="rounded-control border border-rule px-4 py-3 text-sm text-slap"
-        >
-          {toFriendlyError(error)}
-        </div>
+        <ErrorNote error={error} />
       )}
 
       {isMp && (

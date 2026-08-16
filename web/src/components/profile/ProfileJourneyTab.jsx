@@ -6,9 +6,9 @@ import { useState } from "react";
 
 import { Badge } from "../ui/Badge";
 import { useTimeline } from "@/hooks/useTimeline";
-import { toFriendlyError } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { placeOf } from "@/lib/profile";
+import { ErrorNote } from "@/components/ui/ErrorNote";
 
 /**
  * The Political Journey tab: one chronological timeline combining career and
@@ -37,12 +37,7 @@ export function ProfileJourneyTab({ subject, onOpenAssets }) {
   if (isError) {
     return (
       <div className="pb-6">
-        <p
-          role="alert"
-          className="rounded-control border border-rule px-4 py-3 text-sm text-slap"
-        >
-          {toFriendlyError(error)}
-        </p>
+        <ErrorNote error={error} />
       </div>
     );
   }

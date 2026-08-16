@@ -8,11 +8,11 @@ import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { verdictGlyph } from "@/lib/angryVerdict";
 import { SPRING_POP } from "@/lib/motion";
 import { leaderboardShareUrl } from "@/lib/share";
-import { toFriendlyError } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 
 import { ShareButton } from "./ShareButton";
 import { monogramOf, titleCase } from "@/lib/text";
+import { ErrorNote } from "@/components/ui/ErrorNote";
 
 const TIER_COPY = {
   cm: { scope: "Chief Ministers across India's states" },
@@ -118,12 +118,7 @@ function TierBoard({ tier, board, highlightName, onSelectTopper, pendingKey }) {
       {query.isPending && <SkeletonRows />}
 
       {query.isError && (
-        <p
-          role="alert"
-          className="rounded-control border border-rule px-4 py-3 text-sm text-slap"
-        >
-          {toFriendlyError(query.error)}
-        </p>
+        <ErrorNote error={query.error} />
       )}
 
       {!query.isPending && !query.isError && (

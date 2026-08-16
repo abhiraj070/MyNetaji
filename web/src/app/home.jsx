@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Menu, Newspaper } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -34,7 +34,7 @@ import { fetchCmByStateKey, fetchMpByName, toFriendlyError } from "@/lib/api";
 import { GeolocationError, requestPosition } from "@/lib/geolocation";
 import { useLocationState } from "@/lib/location";
 import { useTranslation } from "@/lib/i18n";
-import { rise, SPRING_POP } from "@/lib/motion";
+import { rise } from "@/lib/motion";
 import { useOnboarding, useOnboardingTarget } from "@/lib/onboarding";
 import { buildShareMessage, buildShareUrl } from "@/lib/share";
 import {
@@ -43,8 +43,14 @@ import {
   useResolvedSubject,
   useSubjectSelection,
 } from "@/lib/subject";
-import { NAV_CONTROL, NAV_MENU_BUTTON, NAV_SURFACE } from "@/lib/navStyles";
+import {
+  NAV_CONTROL,
+  NAV_CONTROL_SHAPE,
+  NAV_MENU_BUTTON,
+  NAV_SURFACE,
+} from "@/lib/navStyles";
 import { titleCase } from "@/lib/text";
+import { Toast } from "@/components/ui/Toast";
 
 /**
  * The two representatives a reader's own coordinates resolve to. MLAs are
@@ -600,7 +606,7 @@ export function Home() {
             subject={subject}
           />
 
-          <Toast message={toast} />
+          <Toast message={toast} className="bottom-24 whitespace-nowrap" />
 
           {/* The onboarding layer, mounted last so it is the topmost thing on
               the page and can dim everything else. It renders nothing until
@@ -746,7 +752,7 @@ function ResultsHeader({
             <button
               type="button"
               onClick={onResetToHome}
-              className={`${NAV_CONTROL} inline-flex min-w-0 items-center gap-1 px-3.5 font-display text-xs font-semibold text-muted transition-colors hover:text-ink`}
+              className={`${NAV_CONTROL_SHAPE} inline-flex min-w-0 items-center gap-1 bg-surface px-3.5 font-display text-xs font-semibold text-muted transition-colors hover:text-ink`}
             >
               <span className="truncate">{backLabel ?? t("nav.backToCm")}</span>
             </button>
@@ -785,7 +791,7 @@ function BriefLink() {
       ref={newsRef}
       href="/brief"
       aria-label={`${t("brief.liveNews")} — ${t("brief.title")}`}
-      className={`${NAV_CONTROL} flex h-9 shrink-0 items-center gap-1.5 px-2.5 text-muted transition-[color,transform] duration-200 hover:-translate-y-px hover:text-ink active:scale-95 sm:gap-2 sm:px-3`}
+      className={`${NAV_CONTROL_SHAPE} flex h-9 shrink-0 items-center gap-1.5 bg-surface px-2.5 text-muted transition-[color,transform] duration-200 hover:-translate-y-px hover:text-ink active:scale-95 sm:gap-2 sm:px-3`}
     >
       <LiveDot />
       <Newspaper className="size-4 shrink-0" strokeWidth={2.2} />
@@ -851,25 +857,6 @@ function LocationPill({ label }) {
           floor while the text inside is what actually gives way. */}
       <span className="min-w-0 truncate">{label}</span>
     </span>
-  );
-}
-
-function Toast({ message }) {
-  return (
-    <AnimatePresence>
-      {message && (
-        <motion.div
-          role="status"
-          initial={{ opacity: 0, y: 16, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          transition={SPRING_POP}
-          className="fixed bottom-24 left-1/2 z-50 max-w-[92vw] -translate-x-1/2 rounded-full bg-ink px-5 py-2.5 text-center font-display text-sm font-semibold whitespace-nowrap text-white shadow-lift"
-        >
-          {message}
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 

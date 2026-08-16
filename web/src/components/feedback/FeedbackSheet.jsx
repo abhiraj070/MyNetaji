@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -8,6 +8,7 @@ import { BottomSheet } from "@/components/BottomSheet";
 import { sendFeedback } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import { SPRING_POP } from "@/lib/motion";
+import { Toast } from "@/components/ui/Toast";
 
 /**
  * The feedback flow, wrapped in the shared `BottomSheet`. React first (slap or
@@ -154,28 +155,8 @@ export function FeedbackSheet({ open, onClose, onSubmitted }) {
         )}
       </motion.button>
 
-      <Toast message={toast} />
+      <Toast message={toast} className="bottom-24" />
     </BottomSheet>
-  );
-}
-
-/** Transient pill, matching the app's toast (fixed, above the open sheet). */
-function Toast({ message }) {
-  return (
-    <AnimatePresence>
-      {message && (
-        <motion.div
-          role="status"
-          initial={{ opacity: 0, y: 16, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          transition={SPRING_POP}
-          className="fixed bottom-24 left-1/2 z-50 max-w-[92vw] -translate-x-1/2 rounded-full bg-ink px-5 py-2.5 text-center font-display text-sm font-semibold text-white shadow-lift"
-        >
-          {message}
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 

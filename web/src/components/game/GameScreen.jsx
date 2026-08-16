@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { ArrowLeft, Share2 } from "lucide-react";
@@ -13,9 +13,10 @@ import { usesAngryVerdict } from "@/lib/angryVerdict";
 import { useTranslation } from "@/lib/i18n";
 import { useLocationState } from "@/lib/location";
 import { rise, SPRING_POP } from "@/lib/motion";
-import { NAV_CONTROL, NAV_MENU_BUTTON, NAV_SURFACE } from "@/lib/navStyles";
+import { NAV_CONTROL_SHAPE, NAV_MENU_BUTTON, NAV_SURFACE } from "@/lib/navStyles";
 import { buildShareMessage, buildShareUrl } from "@/lib/share";
 import { subjectKeyOf, useResolvedSubject, useSubjectSelection } from "@/lib/subject";
+import { Toast } from "@/components/ui/Toast";
 
 /**
  * The Slap/Rose game — a page of its own at `/game`, reached by a real
@@ -132,8 +133,11 @@ export function GameScreen() {
               aria-label={t("nav.share")}
               whileTap={{ scale: 0.95 }}
               transition={SPRING_POP}
-              className={`${NAV_CONTROL} flex size-9 shrink-0 items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-                lastChoice ? "bg-slap text-white" : "text-muted hover:text-ink"
+              // Both colours come from the same branch: see `NAV_CONTROL_SHAPE`.
+              className={`${NAV_CONTROL_SHAPE} flex size-9 shrink-0 items-center justify-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                lastChoice
+                  ? "bg-slap text-white"
+                  : "bg-surface text-muted hover:text-ink"
               }`}
             >
               <Share2 className="size-4" strokeWidth={2.2} />
@@ -157,7 +161,7 @@ export function GameScreen() {
         <TodaysHighlight onSelectSubject={selectTopper} pendingKey={pendingKey} />
       </motion.div>
 
-      <Toast message={toast} />
+      <Toast message={toast} className="bottom-10 whitespace-nowrap" />
     </main>
   );
 }
@@ -190,21 +194,3 @@ function NoSubject() {
   );
 }
 
-function Toast({ message }) {
-  return (
-    <AnimatePresence>
-      {message && (
-        <motion.div
-          role="status"
-          initial={{ opacity: 0, y: 16, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          transition={SPRING_POP}
-          className="fixed bottom-10 left-1/2 z-50 max-w-[92vw] -translate-x-1/2 rounded-full bg-ink px-5 py-2.5 text-center font-display text-sm font-semibold whitespace-nowrap text-white shadow-lift"
-        >
-          {message}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}

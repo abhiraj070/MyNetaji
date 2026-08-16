@@ -5,8 +5,8 @@ import { PerformanceParliament } from "./performance/PerformanceParliament";
 import { PerformancePromises } from "./performance/PerformancePromises";
 import { PerformanceTransparency } from "./performance/PerformanceTransparency";
 import { useMpPerformance } from "@/hooks/useMpPerformance";
-import { toFriendlyError } from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
+import { ErrorNote } from "@/components/ui/ErrorNote";
 
 /**
  * The Performance tab: an MP's record, section by section.
@@ -44,12 +44,7 @@ export function ProfilePerformanceTab({ subject, onOpenAssets }) {
   if (isError) {
     return (
       <div className="pb-6">
-        <p
-          role="alert"
-          className="rounded-control border border-rule px-4 py-3 text-sm text-slap"
-        >
-          {toFriendlyError(error)}
-        </p>
+        <ErrorNote error={error} />
       </div>
     );
   }

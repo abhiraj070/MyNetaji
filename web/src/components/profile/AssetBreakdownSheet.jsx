@@ -20,8 +20,8 @@ import {
 import { BottomSheet } from "../BottomSheet";
 import { useAssets } from "@/hooks/useAssets";
 import { useTranslation } from "@/lib/i18n";
-import { toFriendlyError } from "@/lib/api";
 import { ASSET_FIELD_GROUPS } from "@/lib/profile";
+import { ErrorNote } from "@/components/ui/ErrorNote";
 
 const GROUP_ICON = {
   movable: Wallet,
@@ -82,12 +82,7 @@ export function AssetBreakdownSheet({ open, onClose, subject }) {
       subtitle={subject.name}
     >
       {isError ? (
-        <p
-          role="alert"
-          className="rounded-control border border-rule px-4 py-3 text-sm text-slap"
-        >
-          {toFriendlyError(error)}
-        </p>
+        <ErrorNote error={error} />
       ) : loading ? (
         <AssetsSkeleton />
       ) : (
