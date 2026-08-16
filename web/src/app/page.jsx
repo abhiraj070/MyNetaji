@@ -39,6 +39,17 @@ function buildMeta({ title, description, image, url, alt }) {
 }
 
 /**
+ * Bump when the card's artwork changes.
+ *
+ * The image URL is otherwise stable for a given politician, which is what lets
+ * scrapers cache it — and what makes a redesign invisible: WhatsApp, X and any
+ * CDN in between keep serving the picture they already have for that exact
+ * URL, for days. Changing the URL is the only thing they all treat as a new
+ * image. `/api/og` ignores the parameter; it exists purely as a cache key.
+ */
+const OG_CARD_VERSION = "2";
+
+/**
  * Short, clean OG image URL — just the identity (`tier` + state/name). The
  * `/api/og` route looks the record up itself (cached), so the URL stays under
  * ~60 chars instead of embedding a long, double-encoded photo URL that strict
@@ -47,6 +58,7 @@ function buildMeta({ title, description, image, url, alt }) {
 function ogImageUrl(tier, id) {
   const p = new URLSearchParams({ tier });
   p.set(tier === "cm" ? "state" : "name", id);
+  p.set("v", OG_CARD_VERSION);
   return `/api/og?${p.toString()}`;
 }
 
