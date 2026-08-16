@@ -4,7 +4,7 @@ import { getCmByState, getMinisterByName } from "@/lib/og-data";
 
 import { Home } from "./home";
 
-const SITE = "MyNetaji";
+const SITE = "Meet Your Leader";
 
 /**
  * Builds the metadata block for a politician share card. `image` is a relative

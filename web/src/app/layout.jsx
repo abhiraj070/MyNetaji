@@ -40,27 +40,31 @@ const inter = Inter({
 // live domain that actually serves this deployment: if this points anywhere
 // else (e.g. a renamed/old Railway URL), crawlers fetch the OG image from a
 // dead host and show no preview. Override with NEXT_PUBLIC_SITE_URL once a
-// custom domain (e.g. mynetaji.in) is live.
+// custom domain is live.
 const siteUrl =
   (process.env.NEXT_PUBLIC_SITE_URL ?? "https://meetyourleader.in")
     .split(",")[0]
     .trim();
 
+const siteName = "Meet Your Leader";
+const siteDescription = "Know the people who shape your politics.";
+const canonicalUrl = "https://meetyourleader.in";
+
 export const metadata = {
   metadataBase: new URL(siteUrl),
-  title: "MyNetaji",
-  description: "Know the people who shape your politics.",
+  title: siteName,
+  description: siteDescription,
   openGraph: {
     type: "website",
-    siteName: "MyNetaji",
-    url: "/",
-    title: "MyNetaji",
-    description: "Know the people who shape your politics.",
+    siteName,
+    url: canonicalUrl,
+    title: siteName,
+    description: siteDescription,
   },
   twitter: {
     card: "summary_large_image",
-    title: "MyNetaji",
-    description: "Know the people who shape your politics.",
+    title: siteName,
+    description: siteDescription,
   },
 };
 
