@@ -30,6 +30,18 @@ class GoogleCredential(BaseModel):
 
 
 def set_cookie(response, key, value, max_age):
+    """Write one session cookie.
+
+    Every attribute is stated here, and `logout` and the refresh rotation in
+    `VerifyJWT` state the same ones: a cookie can only be replaced or cleared
+    by a `Set-Cookie` that matches its name, domain and path, so the three
+    places that touch these cookies have to agree or a sign-out silently
+    leaves the old one behind.
+
+    No `Domain`: host-only on the API, which is the only reader. `SameSite` and
+    `Secure` come from configuration because they differ between a local
+    http://localhost pair and the production meetyourleader.in pair.
+    """
     response.set_cookie(
         key=key,
         value=value,
@@ -37,6 +49,7 @@ def set_cookie(response, key, value, max_age):
         secure=_settings.COOKIE_SECURE,
         samesite=_settings.COOKIE_SAMESITE,
         max_age=max_age,
+        path="/",
     )
 
 

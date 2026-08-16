@@ -88,7 +88,7 @@ export async function generateMetadata({ searchParams }) {
         const image = ogImageUrl("minister", m.minister_name);
         return buildMeta({
           title: `${m.minister_name} — Union Minister | ${SITE}`,
-          description: `Know ${m.minister_name} beyond the headlines — their biography, work, promises and political record, all in one place.`,
+          description: `Know ${m.minister_name} beyond the headlines — their history, work, promises and political record, all in one place.`,
           image,
           url: `/?share=minister&name=${encodeURIComponent(m.minister_name)}`,
         });

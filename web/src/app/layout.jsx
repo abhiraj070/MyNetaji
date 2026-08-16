@@ -42,7 +42,7 @@ const inter = Inter({
 // dead host and show no preview. Override with NEXT_PUBLIC_SITE_URL once a
 // custom domain (e.g. mynetaji.in) is live.
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://mynetaji.up.railway.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://meetyourleader.in";
 
 export const metadata = {
   metadataBase: new URL(siteUrl),

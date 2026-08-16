@@ -7,11 +7,15 @@ export const api = axios.create({
   timeout: 15_000,
   headers: { "Content-Type": "application/json" },
   // The session is a pair of httpOnly cookies set by `POST /auth/google`.
-  // The API is a different origin from the app (different port in dev, a
-  // different host in production), so without this the browser sends the
-  // request but not the cookies, and every authenticated call looks signed
-  // out. The backend already sets `allow_credentials=True` with an explicit
-  // origin list, which is what makes this legal.
+  // The API is a different *origin* from the app — a different port in dev,
+  // api.meetyourleader.in against meetyourleader.in in production — so without
+  // this the browser sends the request but not the cookies, and every
+  // authenticated call looks signed out. The backend answers with
+  // `allow_credentials=True` and an explicit origin list, which is what makes
+  // it legal; a wildcard origin would be refused.
+  //
+  // The two are the same *site*, which is the part that matters to Safari:
+  // the cookies stay first-party, so tracking prevention leaves them alone.
   withCredentials: true,
 });
 
