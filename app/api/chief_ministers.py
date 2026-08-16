@@ -40,8 +40,13 @@ def get_cm_location(request: LocationRequest, db: Session= Depends(get_db), user
 
 
 @router.post("/get-cm")
-def get_cm(request: GetCmRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
-    """One Chief Minister by state, or all of them when no state is given."""
+def get_cm(request: GetCmRequest, db: Session= Depends(get_db)):
+    """One Chief Minister by state, or all of them when no state is given.
+
+    Public: the share-link preview card is built server-side by the frontend,
+    which has no session to send. What it returns is what that image already
+    shows to anyone the link reaches.
+    """
     state_key= request.state_key
     lang= request.lang
     stmt= select(*_cm_columns(lang))

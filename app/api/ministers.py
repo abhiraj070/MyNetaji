@@ -13,7 +13,10 @@ router = APIRouter(tags=["Union Ministers"])
 
 
 @router.post("/get-minister")
-def get_minister(request: MinistrySearchRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
+def get_minister(request: MinistrySearchRequest, db: Session= Depends(get_db)):
+    # Public: the share-link preview card is built server-side by the
+    # frontend, which has no session to send. What it returns is what that
+    # image already shows to anyone the link reaches.
     minister_name= request.name
     lang= request.lang
     stmt= select(

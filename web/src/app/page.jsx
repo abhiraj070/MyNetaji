@@ -7,8 +7,8 @@ import { Home } from "./home";
 const SITE = "MyNetaji";
 
 /**
- * Builds the metadata block shared by the politician and leaderboard share
- * cards. `image` is a relative path; `metadataBase` (set in `layout.jsx`) turns
+ * Builds the metadata block for a politician share card. `image` is a relative
+ * path; `metadataBase` (set in `layout.jsx`) turns
  * it into the absolute HTTPS URL crawlers require. Includes the OpenGraph
  * `type`/`siteName` explicitly so the page's block doesn't drop them.
  */
@@ -52,8 +52,13 @@ function ogImageUrl(tier, id) {
 
 /**
  * Per-share metadata for crawlers. The app deep-links via `/?share=…`, so a
- * shared politician or leaderboard link is server-rendered here with its own
+ * shared politician link is server-rendered here with its own
  * `og:image`/`twitter:image` instead of the global poster.
+ *
+ * A shared leaderboard link takes no branch here on purpose: it used to point
+ * at a generated top-3 card, and now falls through to the same
+ * `opengraph-image.jpg` poster every other link uses. The share URL itself is
+ * unchanged.
  *
  * Reading `searchParams` opts this route into dynamic rendering — deliberate,
  * and cheap: the default (no `share`) returns `{}` immediately so the root
@@ -71,7 +76,7 @@ export async function generateMetadata({ searchParams }) {
         const image = ogImageUrl("minister", m.minister_name);
         return buildMeta({
           title: `${m.minister_name} — Union Minister | ${SITE}`,
-          description: `Slap or Rose ${m.minister_name}? Cast your verdict on ${SITE}.`,
+          description: `Know ${m.minister_name} beyond the headlines — their biography, work, promises and political record, all in one place.`,
           image,
           url: `/?share=minister&name=${encodeURIComponent(m.minister_name)}`,
         });
@@ -82,21 +87,11 @@ export async function generateMetadata({ searchParams }) {
         const image = ogImageUrl("cm", c.state_key);
         return buildMeta({
           title: `${c.name} — ${c.designation || "Chief Minister"} · ${c.state} | ${SITE}`,
-          description: `Slap or Rose ${c.name}? Cast your verdict on ${SITE}.`,
+          description: `Know ${c.name} beyond the headlines — their biography, work, promises and political record, all in one place.`,
           image,
           url: `/?share=cm&state=${encodeURIComponent(c.state_key)}`,
         });
       }
-    } else if (share === "leaderboard") {
-      const tier = sp.tier === "minister" ? "minister" : "cm";
-      const board = sp.board === "rose" ? "rose" : "slap";
-      const tierLabel = tier === "minister" ? "Union Ministers" : "Chief Ministers";
-      return buildMeta({
-        title: `${SITE} Leaderboard — ${tierLabel}`,
-        description: "See who India is slapping and rosing right now. 👋🌹",
-        image: `/api/og/leaderboard?tier=${tier}&board=${board}`,
-        url: `/?share=leaderboard&tier=${tier}`,
-      });
     }
   } catch {
     // fall through to the default poster

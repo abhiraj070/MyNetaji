@@ -35,34 +35,6 @@ export async function getCmByState(stateKey) {
 }
 
 /**
- * Top-N rows of one board for one tier — the same endpoints the in-app
- * leaderboard uses, but a tiny page and a short cache (standings move, but not
- * so fast that a crawler needs the very latest). `offset=0` so we get the true
- * #1 downward.
- */
-export async function getLeaderboardTop(tier, board = "slap", n = 3) {
-  const path =
-    tier === "minister" ? "/get-leaderboard-minister" : "/get-leaderboard-cm";
-  const res = await fetch(`${API_BASE}${path}?limit=${n}&offset=0`, {
-    next: { revalidate: 300 },
-  });
-  if (!res.ok) throw new Error(`${path} -> ${res.status}`);
-  const data = await res.json();
-  const key = board === "rose" ? "rose_toppers" : "slap_toppers";
-  const rows = Array.isArray(data?.[key]) ? data[key] : [];
-  // Normalise the two tiers' differing name column into one shape the image
-  // route can render without knowing which board it is.
-  return rows.map((r) => ({
-    name: r.name ?? r.minister_name ?? "",
-    place: r.state ?? ministerPortfolio(r.ministry) ?? "",
-    party: r.party ?? "",
-    photo_url: r.photo_url ?? "",
-    slap_count: r.slap_count ?? 0,
-    rose_count: r.rose_count ?? 0,
-  }));
-}
-
-/**
  * A short, readable portfolio for a minister's card — the first fragment of the
  * semicolon-joined `ministry` string with the boilerplate "Minister of …"
  * prefixes stripped, mirroring the in-app leaderboard's `formatSecondary`.

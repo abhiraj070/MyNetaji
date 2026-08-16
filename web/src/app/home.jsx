@@ -36,7 +36,7 @@ import { useLocationState } from "@/lib/location";
 import { useTranslation } from "@/lib/i18n";
 import { rise } from "@/lib/motion";
 import { useOnboarding, useOnboardingTarget } from "@/lib/onboarding";
-import { buildShareMessage, buildShareUrl } from "@/lib/share";
+import { buildShareUrl, buildSubjectShareMessage } from "@/lib/share";
 import {
   buildMpSubject,
   subjectKeyOf,
@@ -322,13 +322,13 @@ export function Home() {
   ]);
 
   const handleShare = useCallback(
-    async (currentChoice) => {
+    async () => {
       if (!subject || typeof window === "undefined") return;
       // A leaderboard-navigated CM isn't the one `coords` points at — sharing
       // the home location here would silently send the recipient to the
       // wrong person, so it's withheld rather than reused.
       const url = buildShareUrl(subject, leaderboardSubject ? null : coords);
-      const text = buildShareMessage(subject, currentChoice);
+      const text = buildSubjectShareMessage(subject);
 
       try {
         if (navigator.share) {
@@ -538,7 +538,7 @@ export function Home() {
               onOpenLeaderboard={() => setOpenSheet("leaderboard")}
               onOpenGame={() => router.push("/game")}
               onOpenX={() => setOpenSheet("x")}
-              onShare={() => handleShare(lastChoice)}
+              onShare={handleShare}
               shareHighlight={Boolean(lastChoice)}
             />
           </motion.div>

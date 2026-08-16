@@ -4,7 +4,6 @@ import { nameUsesAngryVerdict } from "@/lib/angryVerdict";
 import { getCmByState, getMinisterByName, ministerPortfolio } from "@/lib/og-data";
 
 import {
-  BRAND,
   CACHE_STATIC,
   OG_SIZE,
   Wordmark,
@@ -16,13 +15,21 @@ import {
 export const runtime = "nodejs";
 
 // Charcoal/graphite system — warmer and more "consumer app" than the old navy.
+/*
+ * The card is off-white now, so every colour that existed to read against a
+ * dark ground has been re-pointed at the app's own light-theme tokens
+ * (`globals.css`): ink for the name, muted for the place, a hairline of ink
+ * for edges. The amber CTA and the warm accents stay exactly as they were —
+ * they read on both grounds, and they are what makes the card recognisable.
+ */
 const C = {
-  cream: "#F6F1E7",
+  ink: "#171633",
+  place: "#67668C",
   amber: "#FFB020",
   orange: "#FF7A1A",
-  teal: "#22C3AE",
-  place: "#B9B4AB",
-  frame: "#EFE9DC",
+  teal: "#0E9C8B",
+  frame: "#FFFFFF",
+  hairline: "rgba(23,22,51,0.08)",
   ctaText: "#241606",
 };
 
@@ -104,22 +111,22 @@ export async function GET(request) {
           overflow: "hidden",
           fontFamily: "Nunito",
           padding: "54px 58px",
-          backgroundColor: "#0E0F13",
+          backgroundColor: "#F7F8FD",
           backgroundImage:
-            "radial-gradient(circle at 82% 40%, rgba(255,150,40,0.20) 0%, transparent 44%), radial-gradient(circle at 10% 88%, rgba(31,181,163,0.12) 0%, transparent 40%), radial-gradient(circle at 50% -12%, rgba(255,255,255,0.05) 0%, transparent 42%), linear-gradient(140deg, #0E0F13 0%, #17181F 46%, #1C1E27 72%, #0C0D11 100%)",
+            "radial-gradient(circle at 82% 40%, rgba(255,150,40,0.16) 0%, transparent 44%), radial-gradient(circle at 10% 88%, rgba(31,181,163,0.10) 0%, transparent 40%), radial-gradient(circle at 50% -12%, rgba(255,255,255,0.9) 0%, transparent 42%), linear-gradient(140deg, #FFFFFF 0%, #F7F8FD 46%, #F1F3FB 72%, #FFFFFF 100%)",
         }}
       >
         {/* blurred colored blobs — ambient depth, never brighter than the face */}
-        <div style={{ position: "absolute", top: -110, right: -60, width: 340, height: 340, borderRadius: "50%", backgroundColor: "rgba(255,140,30,0.16)", filter: "blur(85px)" }} />
-        <div style={{ position: "absolute", bottom: -120, left: -70, width: 300, height: 300, borderRadius: "50%", backgroundColor: "rgba(31,181,163,0.12)", filter: "blur(80px)" }} />
-        <div style={{ position: "absolute", top: 150, right: 150, width: 380, height: 380, borderRadius: "50%", backgroundColor: "rgba(255,110,20,0.14)", filter: "blur(95px)" }} />
+        <div style={{ position: "absolute", top: -110, right: -60, width: 340, height: 340, borderRadius: "50%", backgroundColor: "rgba(255,140,30,0.14)", filter: "blur(85px)" }} />
+        <div style={{ position: "absolute", bottom: -120, left: -70, width: 300, height: 300, borderRadius: "50%", backgroundColor: "rgba(31,181,163,0.10)", filter: "blur(80px)" }} />
+        <div style={{ position: "absolute", top: 150, right: 150, width: 380, height: 380, borderRadius: "50%", backgroundColor: "rgba(255,110,20,0.12)", filter: "blur(95px)" }} />
 
         {/* soft vignette (behind content so the hero never dims) */}
-        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 200px 70px rgba(0,0,0,0.6)" }} />
+        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 200px 70px rgba(23,22,51,0.05)" }} />
 
         {/* subtle grain */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={NOISE_URL} width={1200} height={630} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.06 }} />
+        <img src={NOISE_URL} width={1200} height={630} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.03 }} />
 
         {/* LEFT — logo + info on an ultra-subtle translucent surface */}
         <div
@@ -131,9 +138,9 @@ export async function GET(request) {
             height: "100%",
             padding: "44px",
             borderRadius: 34,
-            backgroundColor: "rgba(255,255,255,0.035)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            boxShadow: "0 1px 0 rgba(255,255,255,0.05) inset",
+            backgroundColor: "rgba(255,255,255,0.72)",
+            border: `1px solid ${C.hairline}`,
+            boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset",
           }}
         >
           <Wordmark size={34} />
@@ -146,9 +153,9 @@ export async function GET(request) {
                 marginTop: 28,
                 padding: "10px 22px",
                 borderRadius: 999,
-                backgroundColor: "rgba(34,195,174,0.12)",
-                border: "1px solid rgba(34,195,174,0.45)",
-                color: C.cream,
+                backgroundColor: "rgba(34,195,174,0.14)",
+                border: "1px solid rgba(14,156,139,0.45)",
+                color: C.teal,
                 fontSize: 22,
                 fontWeight: 800,
                 letterSpacing: 0.4,
@@ -164,9 +171,8 @@ export async function GET(request) {
               marginTop: 24,
               fontFamily: "Fredoka",
               fontSize: nameSize,
-              color: C.cream,
+              color: C.ink,
               lineHeight: 1.02,
-              textShadow: "0 12px 30px rgba(0,0,0,0.5)",
             }}
           >
             {name}
@@ -218,8 +224,8 @@ export async function GET(request) {
               overflow: "hidden",
               position: "relative",
               border: `8px solid ${C.frame}`,
-              backgroundColor: BRAND.navy2,
-              boxShadow: "0 44px 90px -22px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06)",
+              backgroundColor: "#E8EAF4",
+              boxShadow: `0 44px 90px -22px rgba(23,22,51,0.28), 0 0 0 1px ${C.hairline}`,
             }}
           >
             {img ? (

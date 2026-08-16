@@ -4,7 +4,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 
 /**
- * Shared building blocks for the OG image routes (`/api/og`, `/api/og/leaderboard`).
+ * Shared building blocks for the OG image route (`/api/og`).
  * Underscore-prefixed so the App Router never treats it as a route.
  */
 
@@ -29,6 +29,8 @@ export async function toJpegResponse(imageResponse, cacheControl) {
 
 /** The app's palette, matching `globals.css` — keeps social cards on-brand. */
 export const BRAND = {
+  // The card is light, so the wordmark is set in the app's ink.
+  ink: "#171633",
   navy: "#0e1a3a",
   navy2: "#182a54",
   cream: "#f7efe0",
@@ -44,8 +46,6 @@ export const OG_SIZE = { width: 1200, height: 630 };
 // Cache: politician cards are stable, so long; leaderboard moves, so short.
 export const CACHE_STATIC =
   "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
-export const CACHE_LIVE =
-  "public, max-age=60, s-maxage=300, stale-while-revalidate=600";
 
 let fontsCache = null;
 
@@ -97,7 +97,7 @@ export function Wordmark({ size = 30 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       <div style={{ fontSize: size + 4 }}>👋</div>
-      <div style={{ display: "flex", fontFamily: "Fredoka", fontSize: size, color: BRAND.cream }}>
+      <div style={{ display: "flex", fontFamily: "Fredoka", fontSize: size, color: BRAND.ink }}>
         <span>My</span>
         <span style={{ color: BRAND.saffron }}>Neta</span>
         <span>ji</span>

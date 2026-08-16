@@ -5,8 +5,9 @@
  */
 
 /**
- * `?share=leaderboard&tier=` is what the homepage's `generateMetadata` reads to
- * serve the live top-3 preview card for a shared leaderboard link.
+ * `?share=leaderboard&tier=` opens the app with the leaderboard's tier
+ * selected. It no longer carries a preview card of its own: the link takes the
+ * site's standard Open Graph poster, like any other.
  */
 import { usesAngryVerdict } from "./angryVerdict";
 
@@ -17,13 +18,22 @@ export function leaderboardShareUrl(tier = "cm") {
 }
 
 /**
- * The shared text always names the exact action taken — never generic "rated"
- * language, since the product is an explicit Slap/Rose choice, not a rating
- * scale.
+ * What a shared politician link is: an invitation to read about someone.
  *
- * Moved here from `home.jsx` when the game moved to its own route: the verdict
- * is cast on `/game` and shared from both there and the information page, so
- * neither route can own the wording.
+ * The information page shares this rather than a verdict. A link posted to a
+ * group lands in front of people who have not seen the app, and what they need
+ * from the preview is what they will find when they open it — not a prompt to
+ * take a side before they have read anything.
+ */
+export function buildSubjectShareMessage(subject) {
+  return `Know ${subject.name} beyond the headlines — their biography, work, promises and political record, all in one place.`;
+}
+
+/**
+ * The verdict wording, for the game screen's own share button: there the share
+ * *is* the verdict just cast, and it names the exact action taken rather than
+ * generic "rated" language, since the product is an explicit Slap/Rose choice
+ * and not a rating scale.
  */
 export function buildShareMessage(subject, currentChoice) {
   // A few politicians carry an angry face in place of the slap everywhere in

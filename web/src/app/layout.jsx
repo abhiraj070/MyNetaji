@@ -47,19 +47,18 @@ const siteUrl =
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: "MyNetaji",
-  description:
-    "Find the Chief Minister for wherever you're standing, read their record, and register a verdict.",
+  description: "Know the people who shape your politics.",
   openGraph: {
     type: "website",
     siteName: "MyNetaji",
     url: "/",
-    title: "Slap Your Leader — MyNetaji",
-    description: "India's most chaotic political game. 🌹 Rose or 👋 Slap?",
+    title: "MyNetaji",
+    description: "Know the people who shape your politics.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Slap Your Leader — MyNetaji",
-    description: "India's most chaotic political game. 🌹 Rose or 👋 Slap?",
+    title: "MyNetaji",
+    description: "Know the people who shape your politics.",
   },
 };
 
