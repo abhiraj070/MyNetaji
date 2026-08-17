@@ -76,7 +76,5 @@ data/*
 !data/content_engine/.gitkeep
 
 content_engine
-!app/content_engine/
-!app/content_engine/*.py
-!data/content_engine/
-!data/content_engine/.gitkeep
+X_CONTENT_ENGINE.MD
+generate-x-content
