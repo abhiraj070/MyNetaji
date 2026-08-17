@@ -34,9 +34,9 @@ const GOOGLE_LOGIN_KEY = ["google-login"];
  * network is down would just fail a second time.
  *
  * The first answer comes off the device, so a returning reader is never shown
- * the sign-in screen while a request is in flight. Authenticated API calls
- * still validate the httpOnly cookies: a 401 clears the remembered reader via
- * the shared interceptor below, so a stale local copy cannot survive real use.
+ * the sign-in screen while a request is in flight. The remembered copy has its
+ * own 3-week expiry; explicit sign-out, malformed storage, or that expiry clear
+ * it, while short-lived API cookies can fail without erasing the device copy.
  */
 export function useSession() {
   const queryClient = useQueryClient();
@@ -48,10 +48,13 @@ export function useSession() {
     retry: false,
   });
 
-  // A 401 on any ordinary call means the cookies are gone; `api` forgets the
-  // reader and says so here, which moves every screen to signed out at once.
+  // A 401 on any ordinary call means the server-side cookies need attention.
+  // It no longer deletes the 3-week remembered reader; the local record has its
+  // own expiry and explicit logout path.
   useEffect(() => {
-    const onEnded = () => queryClient.setQueryData(SESSION_KEY, null);
+    const onEnded = () => {
+      queryClient.setQueryData(SESSION_KEY, readRememberedUser());
+    };
     window.addEventListener(SESSION_ENDED_EVENT, onEnded);
     return () => window.removeEventListener(SESSION_ENDED_EVENT, onEnded);
   }, [queryClient]);

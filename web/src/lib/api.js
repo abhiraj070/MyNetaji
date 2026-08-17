@@ -148,10 +148,9 @@ api.interceptors.request.use((config) => {
 
 /**
  * A session can end without the app doing anything — the cookies expire. The
- * app cannot read them, so a 401 on any ordinary call is how it finds out: the
- * remembered reader is forgotten here and `useSession` is woken by the event,
- * which is what turns an expired session back into the sign-in screen rather
- * than a page of failing requests.
+ * app cannot read them, so a 401 on any ordinary call is how it finds out.
+ * The remembered reader is device-held identity, not the short-lived cookie,
+ * so ordinary API refusals do not delete it before its own 3-week expiry.
  *
  * Sign-in itself is exempt: a rejected credential means that attempt failed and
  * says nothing about a session someone may already have.
@@ -168,7 +167,6 @@ function isSessionExpired(error) {
 
 api.interceptors.response.use(undefined, (error) => {
   if (isSessionExpired(error) && error.config?.sessionEpoch === sessionEpoch) {
-    rememberUser(null);
     window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
   }
   return Promise.reject(error);
@@ -1043,20 +1041,35 @@ export function authErrorCode(error) {
 }
 
 const SESSION_USER_KEY = "mynetaji:user";
+const REMEMBERED_USER_TTL_MS = 21 * 24 * 60 * 60 * 1000;
 
 /**
  * The signed-in reader, remembered on the device.
  *
  * Stored so a return visit costs nothing: the app knows who this is before the
  * first request finishes, which is what keeps a signed-in reader off the
- * sign-in screen on arrival. It is a copy of an answer, not a credential — the
- * cookie still authorises every request, and a 401 clears this (see
- * `isSessionExpired`), so it cannot outlive the session it describes.
+ * sign-in screen on arrival. It is a copy of an answer, not a credential. The
+ * browser keeps it for three weeks unless the reader signs out or the value is
+ * malformed.
  */
 export function rememberUser(user) {
   try {
-    if (user) window.localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
-    else window.localStorage.removeItem(SESSION_USER_KEY);
+    if (user) {
+      const remembered = normalizeRememberedUser(user);
+      if (!remembered) {
+        window.localStorage.removeItem(SESSION_USER_KEY);
+        return;
+      }
+      window.localStorage.setItem(
+        SESSION_USER_KEY,
+        JSON.stringify({
+          user: remembered,
+          expiresAt: Date.now() + REMEMBERED_USER_TTL_MS,
+        }),
+      );
+    } else {
+      window.localStorage.removeItem(SESSION_USER_KEY);
+    }
   } catch {
     /* private mode: the session then lasts as long as the tab does */
   }
@@ -1066,8 +1079,10 @@ export function readRememberedUser() {
   try {
     const raw = window.localStorage.getItem(SESSION_USER_KEY);
     if (!raw) return null;
-    const user = normalizeRememberedUser(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const user = normalizeRememberedRecord(parsed);
     if (!user) window.localStorage.removeItem(SESSION_USER_KEY);
+    else if (!isRememberedRecord(parsed)) rememberUser(user);
     return user;
   } catch {
     try {
@@ -1077,6 +1092,28 @@ export function readRememberedUser() {
     }
     return null;
   }
+}
+
+function isRememberedRecord(value) {
+  return (
+    value &&
+    typeof value === "object" &&
+    "user" in value &&
+    "expiresAt" in value
+  );
+}
+
+function normalizeRememberedRecord(value) {
+  if (isRememberedRecord(value)) {
+    if (typeof value.expiresAt !== "number" || Date.now() > value.expiresAt) {
+      return null;
+    }
+    return normalizeRememberedUser(value.user);
+  }
+
+  // Legacy storage was the user object itself. Keep those users signed in and
+  // migrate them to the explicit 3-week record on the next read.
+  return normalizeRememberedUser(value);
 }
 
 function normalizeRememberedUser(user) {
@@ -1120,8 +1157,8 @@ export async function fetchMe() {
  * The remembered reader is returned immediately when there is one — no request,
  * no gate, no flash of the landing page. When there is no remembered reader,
  * `/auth/me` can still restore a live cookie-only session. Once the app starts
- * making authenticated calls, the shared 401 handler clears any stale local
- * copy, so validation happens at the point the session is actually used.
+ * making authenticated calls, the server can still reject expired cookies, but
+ * that no longer erases the device-held user before its own expiry.
  */
 export async function fetchSession() {
   const remembered = readRememberedUser();
