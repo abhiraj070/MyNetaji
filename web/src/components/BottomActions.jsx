@@ -1,6 +1,6 @@
 "use client";
 
-import { Gavel, Search, Share2, Trophy } from "lucide-react";
+import { Gamepad2, Search, Share2, Trophy } from "lucide-react";
 
 import { IconAction } from "./ui/IconAction";
 import { useTranslation } from "@/lib/i18n";
@@ -58,13 +58,13 @@ export function BottomActions({
           anchorRef={leaderboardRef}
         />
         {/* Where Information used to sit. Information is the page now, so
-            the slot goes to the thing that left it: the gavel opens the
+            the slot goes to the thing that left it: the gamepad opens the
             Slap/Rose game on its own route. Same size, same position, same
             styling as every other action — only the destination changed. */}
         <IconAction
           label={t("nav.game")}
           onClick={onOpenGame}
-          icon={Gavel}
+          icon={Gamepad2}
           anchorRef={gameRef}
         />
         <IconAction
