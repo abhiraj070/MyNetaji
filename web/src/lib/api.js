@@ -1065,10 +1065,35 @@ export function rememberUser(user) {
 export function readRememberedUser() {
   try {
     const raw = window.localStorage.getItem(SESSION_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const user = normalizeRememberedUser(JSON.parse(raw));
+    if (!user) window.localStorage.removeItem(SESSION_USER_KEY);
+    return user;
   } catch {
+    try {
+      window.localStorage.removeItem(SESSION_USER_KEY);
+    } catch {
+      /* private mode */
+    }
     return null;
   }
+}
+
+function normalizeRememberedUser(user) {
+  if (!user || typeof user !== "object") return null;
+  const hasId =
+    typeof user.id === "number" ||
+    (typeof user.id === "string" && user.id.trim() !== "");
+  if (!hasId || typeof user.email !== "string" || !user.email.includes("@")) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: typeof user.name === "string" ? user.name : null,
+    picture: typeof user.picture === "string" ? user.picture : null,
+  };
 }
 
 /**
@@ -1093,13 +1118,18 @@ export async function fetchMe() {
  * Who is signed in, answered as fast as it can be.
  *
  * The remembered reader is returned immediately when there is one — no request,
- * no gate, no flash of the landing page. `useSession` still confirms it against
- * `/auth/me` in the background, so a session that ended while the reader was
- * away is corrected a moment later instead of lingering until the first data
- * call fails.
+ * no gate, no flash of the landing page. When there is no remembered reader,
+ * `/auth/me` can still restore a live cookie-only session. Once the app starts
+ * making authenticated calls, the shared 401 handler clears any stale local
+ * copy, so validation happens at the point the session is actually used.
  */
 export async function fetchSession() {
-  return readRememberedUser() ?? fetchMe();
+  const remembered = readRememberedUser();
+  if (remembered) return remembered;
+
+  const user = await fetchMe();
+  rememberUser(user);
+  return user;
 }
 
 /** `POST /auth/logout` — clears both session cookies server-side. */

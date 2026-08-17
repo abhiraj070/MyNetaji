@@ -70,3 +70,13 @@ data_update
 boundaries
 .claude
 data
+!data/
+data/*
+!data/content_engine/
+!data/content_engine/.gitkeep
+
+content_engine
+!app/content_engine/
+!app/content_engine/*.py
+!data/content_engine/
+!data/content_engine/.gitkeep

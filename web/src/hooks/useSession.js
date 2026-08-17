@@ -12,20 +12,14 @@ import { useEffect } from "react";
 import {
   SESSION_ENDED_EVENT,
   authErrorCode,
-  fetchMe,
   fetchSession,
   googleSignIn,
   logoutSession,
-  rememberUser,
+  readRememberedUser,
 } from "@/lib/api";
 
 export const SESSION_KEY = ["session"];
 const GOOGLE_LOGIN_KEY = ["google-login"];
-
-// The remembered reader is confirmed against the server once per page load,
-// not once per component: `useSession` is read by the page, the sidebar and
-// the sign-in screen at the same time, and a request each is three too many.
-let confirmed = false;
 
 /**
  * Who is signed in, if anyone.
@@ -40,43 +34,19 @@ let confirmed = false;
  * network is down would just fail a second time.
  *
  * The first answer comes off the device, so a returning reader is never shown
- * the sign-in screen while a request is in flight. It is then checked against
- * the server once per load, because a remembered reader is a claim about a
- * session that may have ended since — believed immediately, verified promptly.
+ * the sign-in screen while a request is in flight. Authenticated API calls
+ * still validate the httpOnly cookies: a 401 clears the remembered reader via
+ * the shared interceptor below, so a stale local copy cannot survive real use.
  */
 export function useSession() {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: SESSION_KEY,
     queryFn: fetchSession,
+    initialData: () => readRememberedUser() ?? undefined,
     staleTime: 5 * 60_000,
     retry: false,
   });
-
-  // Confirm the remembered reader against `/auth/me`. A session that ended
-  // while they were away is corrected here rather than surfacing later as a
-  // page of failed requests.
-  useEffect(() => {
-    if (confirmed) return;
-    confirmed = true;
-
-    let cancelled = false;
-    fetchMe()
-      .then((user) => {
-        if (cancelled) return;
-        rememberUser(user);
-        queryClient.setQueryData(SESSION_KEY, user);
-      })
-      // A network fault is not an answer about the session: leave what is
-      // remembered in place rather than signing the reader out on a hiccup,
-      // and let the next load ask again.
-      .catch(() => {
-        confirmed = false;
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [queryClient]);
 
   // A 401 on any ordinary call means the cookies are gone; `api` forgets the
   // reader and says so here, which moves every screen to signed out at once.
