@@ -82,10 +82,9 @@ export function useResolvedSubject(coords, { fallbackSelection = null } = {}) {
 
   const wantsMp = homeTier === "mp";
 
-  // Both lookups are authenticated. A returning reader arrives with their
-  // location already restored, so without this the query fires on the landing
-  // screen, is refused, and caches that refusal — which is then what the app
-  // shows them the moment they sign in, until a reload clears it.
+  // The lookups are public, but still gated on the local session so first-time
+  // readers see sign-in before location. Returning readers can proceed from
+  // the remembered browser user even if the short-lived API cookie has gone.
   const { isAuthenticated } = useSession();
 
   const cmQuery = useQuery({

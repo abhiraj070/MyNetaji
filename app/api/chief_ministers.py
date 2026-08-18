@@ -21,7 +21,7 @@ def _cm_columns(lang):
 
 
 @router.post("/get-cm-location")
-def get_cm_location(request: LocationRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
+def get_cm_location(request: LocationRequest, db: Session= Depends(get_db)):
     latitude= request.latitude
     longitude= request.longitude
     lang= request.lang

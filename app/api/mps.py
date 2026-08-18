@@ -25,7 +25,7 @@ router = APIRouter(tags=["MPs"])
 
 
 @router.post("/get-location")
-def get_location(request: LocationRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
+def get_location(request: LocationRequest, db: Session= Depends(get_db)):
 
     latitude= request.latitude
     longitude= request.longitude
