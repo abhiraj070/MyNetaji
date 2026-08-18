@@ -54,7 +54,7 @@ def get_location(request: LocationRequest, db: Session= Depends(get_db)):
 
 
 @router.post("/get-mps-by-name")
-def get_mp_by_name(request: GetMpRequest, db: Session= Depends(get_db), userid: int = Depends(get_current_user)):
+def get_mp_by_name(request: GetMpRequest, db: Session= Depends(get_db)):
     name= request.name
     mp_id= request.id
     constituency_key= request.constituency_key
