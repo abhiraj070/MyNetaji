@@ -12,10 +12,10 @@ import { useEffect } from "react";
 import {
   SESSION_ENDED_EVENT,
   authErrorCode,
-  fetchSession,
+  fetchMe,
   googleSignIn,
   logoutSession,
-  readRememberedUser,
+  rememberUser,
 } from "@/lib/api";
 
 export const SESSION_KEY = ["session"];
@@ -24,36 +24,28 @@ const GOOGLE_LOGIN_KEY = ["google-login"];
 /**
  * Who is signed in, if anyone.
  *
- * `user === null` is a settled answer ("signed out"), distinct from
- * `isPending` ("we haven't asked yet") — the gate in `home.jsx` needs to tell
- * those apart, because showing an auth page to someone who turns out to be
- * signed in is a flash of the wrong screen on every load.
- *
- * `isError` is kept separate again: the API being unreachable is not the same
- * as being signed out, and offering "Continue with Google" to someone whose
- * network is down would just fail a second time.
- *
- * The first answer comes off the device, so a returning reader is never shown
- * the sign-in screen while a request is in flight. The remembered copy has its
- * own 3-week expiry; explicit sign-out, malformed storage, or that expiry clear
- * it, while short-lived API cookies can fail without erasing the device copy.
+ * Authentication is always confirmed by the server. localStorage is only a
+ * convenience copy for UI, never proof of authentication. The previous
+ * implementation used the remembered user as the query's initial answer and
+ * therefore could keep RouteGuard open even when the API cookies were missing
+ * or invalid; every protected feature then correctly returned 401.
  */
 export function useSession() {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: SESSION_KEY,
-    queryFn: fetchSession,
-    initialData: () => readRememberedUser() ?? undefined,
+    queryFn: async () => {
+      const user = await fetchMe();
+      rememberUser(user);
+      return user;
+    },
     staleTime: 5 * 60_000,
     retry: false,
   });
 
-  // A 401 on any ordinary call means the server-side cookies need attention.
-  // It no longer deletes the 3-week remembered reader; the local record has its
-  // own expiry and explicit logout path.
   useEffect(() => {
     const onEnded = () => {
-      queryClient.setQueryData(SESSION_KEY, readRememberedUser());
+      queryClient.setQueryData(SESSION_KEY, null);
     };
     window.addEventListener(SESSION_ENDED_EVENT, onEnded);
     return () => window.removeEventListener(SESSION_ENDED_EVENT, onEnded);
@@ -69,31 +61,12 @@ export function useSession() {
   };
 }
 
-/**
- * Exchange the credential from Google's popup for a session.
- *
- * Success writes the user straight into the session cache: the whole app
- * already reads `useSession`, so the sign-in screen falls away and the landing
- * gate opens without a navigation. That is the point of the popup flow — there
- * is no callback page to come back to any more.
- *
- * Progress and failure are read back out of the mutation cache rather than off
- * this instance, because a page can hold more than one sign-in button (the
- * landing page has two) and Google delivers the credential to whichever one is
- * listening — not necessarily the one that was pressed. Sharing the state means
- * the button under the reader's finger is the one that says "Signing you in…".
- */
 export function useGoogleLogin() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationKey: GOOGLE_LOGIN_KEY,
     mutationFn: googleSignIn,
     onSuccess: (user) => {
-      // Just the session: every authenticated query is gated on it, so there is
-      // nothing from the signed-out screen to throw away. Clearing here would
-      // instead blank the session for an instant and set every mounted query
-      // refetching at the one moment the app can least afford a stray failure.
-      // Signing out is where the cache is emptied.
       if (user) queryClient.setQueryData(SESSION_KEY, user);
     },
   });
@@ -111,16 +84,11 @@ export function useGoogleLogin() {
   };
 }
 
-/** Sign out, then drop every cached answer that belonged to that session. */
 export function useLogout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: logoutSession,
     onSuccess: () => {
-      // Cleared first, then marked signed out: `clear()` drops every cached
-      // answer including the session, and writing the null afterwards is what
-      // stops the sign-in screen from re-asking and bouncing a just-signed-out
-      // reader back into the app.
       queryClient.clear();
       queryClient.setQueryData(SESSION_KEY, null);
     },
